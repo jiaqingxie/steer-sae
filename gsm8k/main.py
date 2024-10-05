@@ -221,10 +221,10 @@ def seed_everything(seed: int):
     torch.backends.cudnn.benchmark = True
 
 
-def load(model_name_or_path):
+def load(model_name_or_path, cache_dir):
     print(f"Loading model from {model_name_or_path} ...")
-    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path,trust_remote_code=True)
-    model = AutoModelForCausalLM.from_pretrained(model_name_or_path,device_map="auto",torch_dtype=torch.float16,trust_remote_code=True, )
+    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir)
+    model = AutoModelForCausalLM.from_pretrained(model_name_or_path,device_map="auto",torch_dtype=torch.float16, cache_dir=cache_dir)
     if tokenizer.pad_token_id is None:
         if tokenizer.eos_token_id is not None:
             tokenizer.pad_token_id = tokenizer.eos_token_id
@@ -261,6 +261,12 @@ def parse_args():
         type=str,
         default="./output",
         help="The output directory where the model predictions and checkpoints will be written.",
+    )
+    parser.add_argument(
+        "--cache_dir",
+        type=str,
+        default="./cache",
+        help="local directory where the model will be saved."
     )
 
     parser.add_argument("--load", type=str, default=None, help="load quantized model")
@@ -327,7 +333,7 @@ def main():
     # log:
     # print(type(list_data_dict)) # class: list
     # print(list_data_dict[1]) # instruction, input, output, category
-    model, tokenizer = load(args.model_name_or_path) # load model and tokenizer
+    model, tokenizer = load(args.model_name_or_path, args.cache_dir) # load model and tokenizer
 
     if args.load: # load quantized model
         print("loading...", args.load)

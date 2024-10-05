@@ -1,1 +1,0 @@
-Num of total question: 1, Correct num: 0, Accuracy: 0.0.
