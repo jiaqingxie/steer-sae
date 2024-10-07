@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="2b0f09ee-f494-4e16-b885-68bce85a36ab" name="SAE">
+        <fileTransfer rootFolder="/cluster/project/sachan/jiaxie/SAE_Math" accessType="SFTP" host="euler.ethz.ch" port="22" sshConfigId="628e83d8-1ce6-474b-9811-2bd844a3f5fb" sshConfig="jiaxie@euler.ethz.ch:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

@@ -6,6 +6,7 @@ import transformers
 from tqdm import tqdm
 from transformers import AutoTokenizer
 import vllm
+from vllm import LLM, SamplingParams
 
 from utils import download_url, load_jsonl
 import argparse
@@ -16,7 +17,7 @@ ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
 
 N_SHOT = 8
-COT_FLAG = False
+COT_FLAG = True
 DEBUG = False
 ANSWER_TRIGGER = "The answer is"
 
@@ -48,7 +49,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     chain.append(
         "There are 15 trees originally. "
         "Then there were 21 trees after some more were planted. "
-        "So there must have been 21 - 15 = 6."
+        "So there must have been 21 - 15 = 6. The answer is 6."
     )
     answer.append("6")
 
@@ -56,7 +57,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
         "If there are 3 cars in the parking lot and 2 more cars arrive, "
         "how many cars are in the parking lot?"
     )
-    chain.append("There are originally 3 cars. 2 more cars arrive. 3 + 2 = 5.")
+    chain.append("There are originally 3 cars. 2 more cars arrive. 3 + 2 = 5. The answer is 5.")
     answer.append("5")
 
     question.append(
@@ -66,7 +67,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     chain.append(
         "Originally, Leah had 32 chocolates. "
         "Her sister had 42. So in total they had 32 + 42 = 74. "
-        "After eating 35, they had 74 - 35 = 39."
+        "After eating 35, they had 74 - 35 = 39. The answer is 39."
     )
     answer.append("39")
 
@@ -76,7 +77,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     )
     chain.append(
         "Jason started with 20 lollipops. Then he had 12 after giving some "
-        "to Denny. So he gave Denny 20 - 12 = 8."
+        "to Denny. So he gave Denny 20 - 12 = 8. The answer is 8."
     )
     answer.append("8")
 
@@ -86,7 +87,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     )
     chain.append(
         "Shawn started with 5 toys. If he got 2 toys each from his mom and "
-        "dad, then that is 4 more toys. 5 + 4 = 9."
+        "dad, then that is 4 more toys. 5 + 4 = 9. The answer is 9."
     )
     answer.append("9")
 
@@ -98,7 +99,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     chain.append(
         "There were originally 9 computers. For each of 4 days, 5 more "
         "computers were added. So 5 * 4 = 20 computers were added. "
-        "9 + 20 is 29."
+        "9 + 20 is 29. The answer is 29."
     )
     answer.append("29")
 
@@ -110,7 +111,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     chain.append(
         "Michael started with 58 golf balls. After losing 23 on Tuesday, "
         "he had 58 - 23 = 35. After losing 2 more, "
-        "he had 35 - 2 = 33 golf balls."
+        "he had 35 - 2 = 33 golf balls. The answer is 33."
     )
     answer.append("33")
 
@@ -121,7 +122,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     chain.append(
         "Olivia had 23 dollars. "
         "5 bagels for 3 dollars each will be 5 x 3 = 15 dollars. "
-        "So she has 23 - 15 dollars left. 23 - 15 is 8."
+        "So she has 23 - 15 dollars left. 23 - 15 is 8. The answer is 8."
     )
     answer.append("8")
 
@@ -159,13 +160,18 @@ def create_demo_text(n_shot=8, cot_flag=True):
 
 def build_prompt(input_text, n_shot, cot_flag):
     demo = create_demo_text(n_shot, cot_flag)
-    input_text_prompt = demo + "Q: " + input_text + "\n" + "A:"
+    if cot_flag:
+        input_text_prompt = demo + "Q: " + input_text + "\n Please reason step by step. " + "A:"
+    else:
+        input_text_prompt = demo + "Q: " + input_text + "\n" + "A:"
     return input_text_prompt
 
 
 def clean_answer(model_pred):
-    model_pred = model_pred.lower()
-    preds = model_pred.split(ANSWER_TRIGGER.lower())
+    generated_text = model_pred.outputs[0].text
+
+    generated_text = generated_text.lower()
+    preds = generated_text.split(ANSWER_TRIGGER.lower())
     answer_flag = True if len(preds) > 1 else False
 
     if answer_flag:
@@ -205,10 +211,10 @@ def seed_everything(seed: int):
     torch.backends.cudnn.benchmark = True
 
 
-def load(model_name_or_path):
+def load(model_name_or_path, cache_dir):
     print(f"Loading model from {model_name_or_path} ...")
-    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
-    llm = vllm.LLM(model_name_or_path)  # Initialize vLLM
+    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir, trust_remote_code=True)
+    llm = vllm.LLM(model_name_or_path, download_dir = cache_dir, gpu_memory_utilization = 0.95, max_model_len=4096, trust_remote_code=True)  # Initialize vLLM
     return llm, tokenizer
 
 
@@ -238,7 +244,12 @@ def parse_args():
         default="./output",
         help="The output directory where the model predictions and checkpoints will be written.",
     )
-
+    parser.add_argument(
+        "--cache_dir",
+        type=str,
+        default="./cache",
+        help="local directory where the model will be saved."
+    )
     parser.add_argument("--load", type=str, default=None, help="load quantized model")
 
     args = parser.parse_args()
@@ -247,7 +258,7 @@ def parse_args():
 
 def generate(model, tokenizer, input_text, generate_kwargs):
     # Input text as is, no need for attention mask or input ids in vLLM
-    response = model.generate([input_text], **generate_kwargs)
+    response = model.generate([input_text], generate_kwargs)
 
     if len(response) > 1:
         return response
@@ -272,14 +283,19 @@ def main():
 
     list_data_dict = load_jsonl(test_filepath, instruction="question", output="answer")
 
-    model, tokenizer = load(args.model_name_or_path)
+    model, tokenizer = load(args.model_name_or_path, args.cache_dir)
 
     answers = []
     for sample in tqdm(list_data_dict):
         input_text = build_prompt(sample["instruction"], N_SHOT, COT_FLAG)
+        input_text = input_text.strip(" ")
 
-        generate_kwargs = dict(max_new_tokens=256, top_p=0.95, temperature=0.8)
-        model_completion = generate(model, tokenizer, input_text, generate_kwargs)
+        sampling_params = SamplingParams(
+            max_tokens=512,
+            temperature=0,
+            top_p=1,
+        )
+        model_completion = generate(model, tokenizer, input_text, sampling_params)
         model_answer = clean_answer(model_completion)
 
         is_cor = is_correct(model_answer, sample["output"])
