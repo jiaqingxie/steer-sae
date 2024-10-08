@@ -35,7 +35,7 @@ def extract_answer_from_output(completion):
 def is_correct(model_answer, answer):
     gt_answer = extract_answer_from_output(answer)
     assert gt_answer != INVALID_ANS
-    return model_answer == gt_answer
+    return model_answer == gt_answer or float(model_answer) == float(gt_answer)
 
 
 def create_demo_text(n_shot=8, cot_flag=True):
@@ -49,7 +49,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     chain.append(
         "There are 15 trees originally. "
         "Then there were 21 trees after some more were planted. "
-        "So there must have been 21 - 15 = 6. The answer is 6."
+        "So there must have been 21 - 15 = 6."
     )
     answer.append("6")
 
@@ -57,7 +57,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
         "If there are 3 cars in the parking lot and 2 more cars arrive, "
         "how many cars are in the parking lot?"
     )
-    chain.append("There are originally 3 cars. 2 more cars arrive. 3 + 2 = 5. The answer is 5.")
+    chain.append("There are originally 3 cars. 2 more cars arrive. 3 + 2 = 5.")
     answer.append("5")
 
     question.append(
@@ -67,7 +67,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     chain.append(
         "Originally, Leah had 32 chocolates. "
         "Her sister had 42. So in total they had 32 + 42 = 74. "
-        "After eating 35, they had 74 - 35 = 39. The answer is 39."
+        "After eating 35, they had 74 - 35 = 39."
     )
     answer.append("39")
 
@@ -77,7 +77,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     )
     chain.append(
         "Jason started with 20 lollipops. Then he had 12 after giving some "
-        "to Denny. So he gave Denny 20 - 12 = 8. The answer is 8."
+        "to Denny. So he gave Denny 20 - 12 = 8."
     )
     answer.append("8")
 
@@ -87,7 +87,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     )
     chain.append(
         "Shawn started with 5 toys. If he got 2 toys each from his mom and "
-        "dad, then that is 4 more toys. 5 + 4 = 9. The answer is 9."
+        "dad, then that is 4 more toys. 5 + 4 = 9."
     )
     answer.append("9")
 
@@ -99,7 +99,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     chain.append(
         "There were originally 9 computers. For each of 4 days, 5 more "
         "computers were added. So 5 * 4 = 20 computers were added. "
-        "9 + 20 is 29. The answer is 29."
+        "9 + 20 is 29."
     )
     answer.append("29")
 
@@ -111,7 +111,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     chain.append(
         "Michael started with 58 golf balls. After losing 23 on Tuesday, "
         "he had 58 - 23 = 35. After losing 2 more, "
-        "he had 35 - 2 = 33 golf balls. The answer is 33."
+        "he had 35 - 2 = 33 golf balls."
     )
     answer.append("33")
 
@@ -122,7 +122,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
     chain.append(
         "Olivia had 23 dollars. "
         "5 bagels for 3 dollars each will be 5 x 3 = 15 dollars. "
-        "So she has 23 - 15 dollars left. 23 - 15 is 8. The answer is 8."
+        "So she has 23 - 15 dollars left. 23 - 15 is 8."
     )
     answer.append("8")
 
@@ -134,22 +134,34 @@ def create_demo_text(n_shot=8, cot_flag=True):
     demo_text = ""
     for i in index_list[:n_shot]:
         if cot_flag:
+            # demo_text += (
+            #     "Q: "
+            #     + question[i]
+            #     + "\nA: "
+            #     + chain[i]
+            #     + " "
+            #     + ANSWER_TRIGGER
+            #     + " "
+            #     + answer[i]
+            #     + ".\n\n"
+            # )
+            demo_text += (
+                    "<|im_start|>system\n"
+                    "Please reason step by step, and put your final answer within \\boxed{{}}."
+                    "<|im_end|>\n"
+                    "<|im_start|>user\n"
+                    + question[i] +
+                    "<|im_end|>\n"
+                    "<|im_start|>assistant\n"
+                    + chain[i] +
+                    " \\boxed{" + answer[i] + "}."
+                                              "\n\n"
+            )
+        else:
             demo_text += (
                 "Q: "
                 + question[i]
                 + "\nA: "
-                + chain[i]
-                + " "
-                + ANSWER_TRIGGER
-                + " "
-                + answer[i]
-                + ".\n\n"
-            )
-        else:
-            demo_text += (
-                "Question: "
-                + question[i]
-                + "\nAnswer: "
                 + ANSWER_TRIGGER
                 + " "
                 + answer[i]
@@ -171,7 +183,15 @@ def clean_answer(model_pred):
     generated_text = model_pred.outputs[0].text
 
     generated_text = generated_text.lower()
-    preds = generated_text.split(ANSWER_TRIGGER.lower())
+    # preds = generated_text.split(ANSWER_TRIGGER.lower())
+
+    match = re.search(r'\\boxed{(.*?)}', generated_text)
+
+    if match:
+        preds = match.group(1)
+    else:
+        # 如果没有找到 \boxed{}，可以进行相应的处理
+        preds = None
     answer_flag = True if len(preds) > 1 else False
 
     if answer_flag:
@@ -235,7 +255,7 @@ def parse_args():
     parser.add_argument(
         "--seed",
         type=int,
-        default=42,
+        default=0,
         help="Random seed.",
     )
     parser.add_argument(
@@ -258,6 +278,11 @@ def parse_args():
 
 def generate(model, tokenizer, input_text, generate_kwargs):
     # Input text as is, no need for attention mask or input ids in vLLM
+    input_text = tokenizer.apply_chat_template(
+                [{"role": "user", "content": input_text.strip()}],
+                tokenize=False,
+                add_generation_prompt=True,
+            )
     response = model.generate([input_text], generate_kwargs)
 
     if len(response) > 1:
@@ -291,9 +316,12 @@ def main():
         input_text = input_text.strip(" ")
 
         sampling_params = SamplingParams(
-            max_tokens=512,
+            max_tokens=2048,
             temperature=0,
             top_p=1,
+            stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ"],
+            stop_token_ids=(
+                [151645, 151643])
         )
         model_completion = generate(model, tokenizer, input_text, sampling_params)
         model_answer = clean_answer(model_completion)
