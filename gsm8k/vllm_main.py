@@ -35,7 +35,10 @@ def extract_answer_from_output(completion):
 def is_correct(model_answer, answer):
     gt_answer = extract_answer_from_output(answer)
     assert gt_answer != INVALID_ANS
-    return model_answer == gt_answer or float(model_answer) == float(gt_answer)
+    if model_answer == INVALID_ANS:
+        return False
+    else:
+        return model_answer == gt_answer or float(model_answer) == float(gt_answer)
 
 
 def create_demo_text(n_shot=8, cot_flag=True):
@@ -155,7 +158,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
                     "<|im_start|>assistant\n"
                     + chain[i] +
                     " \\boxed{" + answer[i] + "}."
-                                              "\n\n"
+                    "\n\n"
             )
         else:
             demo_text += (
@@ -173,7 +176,12 @@ def create_demo_text(n_shot=8, cot_flag=True):
 def build_prompt(input_text, n_shot, cot_flag):
     demo = create_demo_text(n_shot, cot_flag)
     if cot_flag:
-        input_text_prompt = demo + "Q: " + input_text + "\n Please reason step by step. " + "A:"
+        input_text_prompt = demo + ( "<|im_start|>system\n"
+                    "Please reason step by step, and put your final answer within \\boxed{{}}."
+                    "<|im_end|>\n"
+                    "<|im_start|>user\n\n"
+                    + input_text
+                    )
     else:
         input_text_prompt = demo + "Q: " + input_text + "\n" + "A:"
     return input_text_prompt
@@ -190,16 +198,20 @@ def clean_answer(model_pred):
     if match:
         preds = match.group(1)
     else:
-        # 如果没有找到 \boxed{}，可以进行相应的处理
         preds = None
-    answer_flag = True if len(preds) > 1 else False
 
-    if answer_flag:
-        pred = preds[1]
+    if preds is not None:
+        answer_flag = True if len(preds) > 1 else False
     else:
-        pred = preds[-1]
+        return INVALID_ANS
 
-    pred = pred.replace(",", "")
+    # if answer_flag:
+    #     pred = preds[1]
+    # else:
+    #     pred = preds[-1]
+
+
+    pred = preds.replace(",", "")
     pred = [s for s in re.findall(r"-?\d+\.?\d*", pred)]
 
     if len(pred) == 0:
@@ -357,7 +369,6 @@ def main():
             f"Accuracy: {float(sum(answers))/len(answers)}.",
             file=f,
         )
-
 
 if __name__ == "__main__":
     main()
