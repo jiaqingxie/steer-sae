@@ -184,9 +184,9 @@ def clean_answer(model_pred):
         return INVALID_ANS
 
     if answer_flag:
-        pred = preds[1]
+        preds = preds[1]
     else:
-        pred = preds[-1]
+        preds = preds[-1]
 
 
     pred = preds.replace(",", "")
@@ -306,7 +306,11 @@ def main():
             top_p=1,
             stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ"],
             stop_token_ids=(
-                [151645, 151643])
+                [151645, 151643]
+                if "qwen2" in args.model_name_or_path.lower()
+                else None
+            )
+
         )
         model_completion = generate(model, tokenizer, input_text, sampling_params)
         model_answer = clean_answer(model_completion)
