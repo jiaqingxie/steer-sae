@@ -19,8 +19,9 @@ source sae/bin/activate
 
 cd /cluster/project/sachan/jiaxie/SAE_Math
 
-python gsm8k/vllm_main.py --model_name_or_path=Qwen/Qwen2.5-Math-7B --cache_dir=/cluster/scratch/jiaxie/models/Qwen/Qwen2.5-Math-7B
+#python gsm8k/vllm_main.py --model_name_or_path=Qwen/Qwen2.5-Math-7B-Instruct --cache_dir=/cluster/scratch/jiaxie/models/Qwen/Qwen2.5-Math-7B-Instruct
 
+python gsm8k/vllm_main.py --model_name_or_path=google/gemma-2-9b --cache_dir=/cluster/scratch/jiaxie/models/google/gemma-2-9b
 
 
 
