@@ -137,28 +137,16 @@ def create_demo_text(n_shot=8, cot_flag=True):
     demo_text = ""
     for i in index_list[:n_shot]:
         if cot_flag:
-            # demo_text += (
-            #     "Q: "
-            #     + question[i]
-            #     + "\nA: "
-            #     + chain[i]
-            #     + " "
-            #     + ANSWER_TRIGGER
-            #     + " "
-            #     + answer[i]
-            #     + ".\n\n"
-            # )
             demo_text += (
-                    "<|im_start|>system\n"
-                    "Please reason step by step, and put your final answer within \\boxed{{}}."
-                    "<|im_end|>\n"
-                    "<|im_start|>user\n"
-                    + question[i] +
-                    "<|im_end|>\n"
-                    "<|im_start|>assistant\n"
-                    + chain[i] +
-                    " \\boxed{" + answer[i] + "}."
-                    "\n\n"
+                "Q: "
+                + question[i]
+                + "\nA: "
+                + chain[i]
+                + " "
+                + ANSWER_TRIGGER
+                + " "
+                + answer[i]
+                + ".\n\n"
             )
         else:
             demo_text += (
@@ -176,12 +164,8 @@ def create_demo_text(n_shot=8, cot_flag=True):
 def build_prompt(input_text, n_shot, cot_flag):
     demo = create_demo_text(n_shot, cot_flag)
     if cot_flag:
-        input_text_prompt = demo + ( "<|im_start|>system\n"
-                    "Please reason step by step, and put your final answer within \\boxed{{}}."
-                    "<|im_end|>\n"
-                    "<|im_start|>user\n\n"
-                    + input_text
-                    )
+        input_text_prompt = demo + "Q: " + input_text + "\n Please reason step by step. " + "A:"
+
     else:
         input_text_prompt = demo + "Q: " + input_text + "\n" + "A:"
     return input_text_prompt
@@ -191,24 +175,18 @@ def clean_answer(model_pred):
     generated_text = model_pred.outputs[0].text
 
     generated_text = generated_text.lower()
-    # preds = generated_text.split(ANSWER_TRIGGER.lower())
+    preds = generated_text.split(ANSWER_TRIGGER.lower())
 
-    match = re.search(r'\\boxed{(.*?)}', generated_text)
-
-    if match:
-        preds = match.group(1)
-    else:
-        preds = None
 
     if preds is not None:
         answer_flag = True if len(preds) > 1 else False
     else:
         return INVALID_ANS
 
-    # if answer_flag:
-    #     pred = preds[1]
-    # else:
-    #     pred = preds[-1]
+    if answer_flag:
+        pred = preds[1]
+    else:
+        pred = preds[-1]
 
 
     pred = preds.replace(",", "")
@@ -246,7 +224,7 @@ def seed_everything(seed: int):
 def load(model_name_or_path, cache_dir):
     print(f"Loading model from {model_name_or_path} ...")
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir, trust_remote_code=True)
-    llm = vllm.LLM(model_name_or_path, download_dir = cache_dir, gpu_memory_utilization = 0.95, max_model_len=4096, trust_remote_code=True)  # Initialize vLLM
+    llm = vllm.LLM(model_name_or_path, download_dir = cache_dir, gpu_memory_utilization = 1, max_model_len=4096, trust_remote_code=True)  # Initialize vLLM
     return llm, tokenizer
 
 
@@ -290,11 +268,6 @@ def parse_args():
 
 def generate(model, tokenizer, input_text, generate_kwargs):
     # Input text as is, no need for attention mask or input ids in vLLM
-    input_text = tokenizer.apply_chat_template(
-                [{"role": "user", "content": input_text.strip()}],
-                tokenize=False,
-                add_generation_prompt=True,
-            )
     response = model.generate([input_text], generate_kwargs)
 
     if len(response) > 1:
@@ -369,6 +342,7 @@ def main():
             f"Accuracy: {float(sum(answers))/len(answers)}.",
             file=f,
         )
+
 
 if __name__ == "__main__":
     main()

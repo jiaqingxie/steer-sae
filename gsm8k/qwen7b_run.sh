@@ -18,6 +18,34 @@ source sae/bin/activate
 
 
 cd /cluster/project/sachan/jiaxie/SAE_Math
-python gsm8k/vllm_main.py --model_name_or_path=Qwen/Qwen2.5-Math-7B --cache_dir=/cluster/scratch/jiaxie/models/Qwen/Qwen2.5-Math-7B
-#python gsm8k/vllm_main.py --model_name_or_path=meta-llama/Meta-Llama-3-8B --cache_dir=/cluster/scratch/jiaxie/models/meta-llama/Meta-Llama-3-8B
-#python gsm8k/vllm_main.py --model_name_or_path=mistralai/Mistral-7B-v0.1 --cache_dir=/cluster/scratch/jiaxie/models/mistralai/Mistral-7B-v0.1
+
+# Settings
+PROMPT_TYPE="qwen25-math-cot"
+MODEL_NAME_OR_PATH="Qwen/Qwen2.5-Math-7B"
+OUTPUT_DIR="/cluster/scratch/jiaxie/Qwen2.5/output"
+CACHE_DIR="/cluster/scratch/jiaxie/models/Qwen/Qwen2.5-Math-7B"
+
+SPLIT="test"
+NUM_TEST_SAMPLE=-1
+
+# English open datasets
+#gsm8k,math,svamp,asdiv,mawps,carp_en,tabmwp,minerva_math,gaokao2023en,olympiadbench,college_math
+DATA_NAME="gsm8k"
+TOKENIZERS_PARALLELISM=false \
+python3 -u math_eval.py \
+    --model_name_or_path ${MODEL_NAME_OR_PATH} \
+    --data_name ${DATA_NAME} \
+    --output_dir ${OUTPUT_DIR} \
+    --split ${SPLIT} \
+    --prompt_type ${PROMPT_TYPE} \
+    --num_test_sample ${NUM_TEST_SAMPLE} \
+    --seed 0 \
+    --temperature 0 \
+    --n_sampling 1 \
+    --top_p 1 \
+    --start 0 \
+    --end -1 \
+    --use_vllm \
+    --save_outputs \
+    --overwrite \
+    --cache_dir ${CACHE_DIR} \
