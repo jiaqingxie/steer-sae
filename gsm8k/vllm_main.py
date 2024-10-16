@@ -17,7 +17,7 @@ ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
 
 N_SHOT = 8
-COT_FLAG = True
+COT_FLAG = False
 DEBUG = False
 ANSWER_TRIGGER = "The answer is"
 

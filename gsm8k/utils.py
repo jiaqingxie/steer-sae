@@ -64,4 +64,9 @@ def load_jsonl(
     return list_data_dict
 
 
+def TopK(a: set, k: int):
+    a_list = list(a)
+    sorted_list = sorted(enumerate(a_list), key=lambda x: x[1], reverse=True)
+    top_k = sorted_list[:k]
 
+    return top_k
