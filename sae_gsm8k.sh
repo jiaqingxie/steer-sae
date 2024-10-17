@@ -24,6 +24,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings
 MODEL_NAME_OR_PATH="google/gemma-2-2b"
+DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
 DEBUG=False
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
 COT_FLAG=False
@@ -37,8 +38,9 @@ TRANSFORMER_LENS=True
 
 
 
-python -u gsm8k/sae.py \
+python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
+    --data_root ${DATA_ROOT} \
     --debug ${DEBUG} \
     --cache_dir ${CACHE_DIR} \
     --cot_flag ${COT_FLAG} \
