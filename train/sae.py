@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import torch
 import re
 import os
@@ -10,14 +13,13 @@ from vllm import LLM, SamplingParams
 import transformer_lens
 from huggingface_hub import hf_hub_download
 from models.SAE.JumpReLU import JumpReLUSAE
-import sys, os
+
 
 
 from utils import download_url, load_jsonl, TopK
 import argparse
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 transformers.logging.set_verbosity(40)
@@ -267,7 +269,7 @@ def parse_args():
         help="The output directory where the model predictions and checkpoints will be written.",
     )
     parser.add_argument(
-        "--DEBUG",
+        "--debug",
         action="store_true",
         help="Check full input text",
     )
@@ -278,7 +280,7 @@ def parse_args():
         help="local directory where the model will be saved."
     )
     parser.add_argument(
-        "--COT_FLAG",
+        "--cot_flag",
         action="store_true",
         help="use chain of thought or not"
     )

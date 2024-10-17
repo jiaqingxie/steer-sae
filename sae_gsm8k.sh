@@ -25,29 +25,24 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 #Settings
 MODEL_NAME_OR_PATH="google/gemma-2-2b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
-DEBUG=False
+#DEBUG=False
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-COT_FLAG=False
+#COT_FLAG=False
 LAYER_IDX=20
 K=5
 TYPE="sae"
 SAE_FILE="google/gemma-scope-2b-pt-res"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
-VLLM=False
+#VLLM=False
 TRANSFORMER_LENS=True
-
-
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
     --data_root ${DATA_ROOT} \
-    --debug ${DEBUG} \
     --cache_dir ${CACHE_DIR} \
-    --cot_flag ${COT_FLAG} \
     --layer_idx ${LAYER_IDX} \
     --K ${K} \
     --type ${TYPE} \
     --sae_file ${SAE_FILE} \
     --param_file ${PARAM_FILE} \
-    --vllm ${VLLM} \
-    --transformer_lens ${TRANSFORMER_LENS} \
+    --transformer_lens \
