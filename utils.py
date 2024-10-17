@@ -6,7 +6,11 @@ import urllib.request
 import os.path as osp
 import gzip
 import json
-
+import re
+import requests
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def download_url(url: str, folder="folder"):
     """
@@ -64,9 +68,71 @@ def load_jsonl(
     return list_data_dict
 
 
-def TopK(a: set, k: int):
-    a_list = list(a)
-    sorted_list = sorted(enumerate(a_list), key=lambda x: x[1], reverse=True)
+def TopK(a: dict, k: int):
+    sorted_list = sorted(a.items(), key=lambda x: x[1], reverse=True)
     top_k = sorted_list[:k]
-
     return top_k
+
+def extract_before_backslash(s):
+    backslash_pos = s.find('\\')
+    if backslash_pos != -1:
+        return s[:backslash_pos]
+    else:
+        return s  # Return the whole string if no backslash is found
+
+def extract_explanation(idx):
+    def get_dashboard_html(sae_release="gemma-2-2b", sae_id="20-gemmascope-res-16k", feature_idx=6868):
+        return html_template.format(sae_release, sae_id, feature_idx)
+    html_template = "https://neuronpedia.org/{}/{}/{}?embed=true&embedexplanation=true&embedplots=true&embedtest=true&height=300"
+    html_add = get_dashboard_html(sae_release="gemma-2-2b", sae_id="20-gemmascope-res-16k", feature_idx=idx)
+
+    response = requests.get(html_add)
+    html_content = response.content.decode('utf-8')
+    start_pos = html_content.find('"explanations')
+    start_pos += len('\"explanations\"')
+    extracted_content = html_content[start_pos:start_pos + 1000]
+
+    start_pos = extracted_content.find('\\\"description\\\"')
+    start_pos += len('\\\"description\\\":\\\"')
+    result = extract_before_backslash(extracted_content[start_pos:start_pos + 1000])
+    return result
+
+def plot_SAE_barplot(input, top_n):
+
+    df = pd.DataFrame(list(input.items()), columns=['Feature', 'Count'])
+    df = df.sort_values(by='Count', ascending=False)
+
+    df_top = df.head(top_n)
+    sns.set_theme(style='whitegrid', context='paper', font_scale=1.2)
+    blue_gradient = sns.color_palette("Blues_r", n_colors=top_n)
+
+    # Create the bar plot
+    plt.figure(figsize=(12, 6))
+    ax = sns.barplot(
+        x='Feature',
+        y='Count',
+        data=df_top,
+        palette=blue_gradient,
+        edgecolor='black'
+    )
+
+    plt.xticks(rotation=45, ha='right')
+
+    for p in ax.patches:
+        ax.annotate(
+            format(p.get_height(), '.0f'),
+            (p.get_x() + p.get_width() / 2., p.get_height()),
+            ha='center',
+            va='bottom',
+            fontsize=10,
+            xytext=(0, 5),
+            textcoords='offset points'
+        )
+
+    ax.set_title(f'Top {top_n} Feature Count Distribution', fontsize=16, weight='bold')
+    ax.set_xlabel('Features', fontsize=14)
+    ax.set_ylabel('Feature Count', fontsize=14)
+    sns.despine()
+    plt.tight_layout()
+    plt.savefig('/cluster/project/sachan/jiaxie/SAE_Math/output/results.pdf')
+

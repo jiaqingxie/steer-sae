@@ -2,7 +2,7 @@
 
 #SBATCH --output=/cluster/project/sachan/jiaxie/results/%j.out
 #SBATCH --error=/cluster/project/sachan/jiaxie/results/%j.err
-#SBATCH --mem-per-cpu=10G
+#SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
 #SBATCH --time=3:00:00
@@ -29,6 +29,7 @@ DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
 #COT_FLAG=False
 LAYER_IDX=20
+PLOT_NUM=10
 K=5
 TYPE="sae"
 SAE_FILE="google/gemma-scope-2b-pt-res"
@@ -41,6 +42,7 @@ python -u train/sae.py \
     --data_root ${DATA_ROOT} \
     --cache_dir ${CACHE_DIR} \
     --layer_idx ${LAYER_IDX} \
+    --plot_num ${PLOT_NUM} \
     --K ${K} \
     --type ${TYPE} \
     --sae_file ${SAE_FILE} \

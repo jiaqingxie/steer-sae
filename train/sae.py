@@ -16,7 +16,7 @@ from models.SAE.JumpReLU import JumpReLUSAE
 
 
 
-from utils import download_url, load_jsonl, TopK
+from utils import download_url, load_jsonl, TopK, extract_explanation, plot_SAE_barplot
 import argparse
 import numpy as np
 
@@ -315,6 +315,12 @@ def parse_args():
         help="parameter file name on huggingface"
     )
     parser.add_argument(
+        "--plot_num",
+        type=int,
+        default=15,
+        help="number of SAE features"
+    )
+    parser.add_argument(
         "--vllm",
         action="store_true",
         help="use vllm or not"
@@ -359,7 +365,20 @@ def main():
 
     model, tokenizer = load(args.model_name_or_path, args.cache_dir, args.vllm, args.transformer_lens)
 
+    path_to_params = hf_hub_download(
+        repo_id=args.sae_file,
+        filename=args.param_file,
+        force_download=False,
+        cache_dir=args.cache_dir,
+    )
 
+    params = np.load(path_to_params)
+    pt_params = {k: torch.from_numpy(v).cuda() for k, v in params.items()}
+    # pt_params = {k: torch.from_numpy(v) for k, v in params.items()}
+
+    sae = JumpReLUSAE(params['W_enc'].shape[0], params['W_enc'].shape[1])
+    sae.load_state_dict(pt_params)
+    sae.cuda()
 
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
@@ -410,34 +429,20 @@ def main():
             _, cache = model.run_with_cache(inputs)
 
             target_act = cache[f'blocks.{args.layer_idx}.hook_resid_post'].squeeze()
-            path_to_params = hf_hub_download(
-                repo_id=args.sae_file,
-                filename=args.param_file,
-                force_download=False,
-                cache_dir = args.cache_dir,
-            )
 
-            params = np.load(path_to_params)
-            pt_params = {k: torch.from_numpy(v).cuda() for k, v in params.items()}
-
-            sae = JumpReLUSAE(params['W_enc'].shape[0], params['W_enc'].shape[1])
-            sae.load_state_dict(pt_params)
-            sae.cuda()
             sae_acts = sae.encode(target_act.to(torch.float32))
 
             # This is for exploring the last token only
             top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
             for ind in top_k_indices:
-                if ind not in answers.keys():
-                    answers[ind] = 1
+                if ind.item() not in answers.keys():
+                    answers[ind.item()] = 1
                 else:
-                    answers[ind] += 1
+                    answers[ind.item()] += 1
+            del cache
+            torch.cuda.empty_cache()
 
     os.makedirs(args.output_dir, exist_ok=True)
-
-    with open(os.path.join(args.output_dir, "results.txt"), "w") as f:
-        for answer in answers:
-            print(answer, file=f)
 
     if args.type == "inference":
         with open(os.path.join(args.output_dir, "scores.txt"), "w") as f:
@@ -447,10 +452,18 @@ def main():
                 f"Accuracy: {float(sum(answers))/len(answers)}.",
                 file=f,
             )
+        with open(os.path.join(args.output_dir, "results.txt"), "w") as f:
+            for answer in answers:
+                print(answer, file=f)
     elif args.type == "sae":
         Top_K = TopK(answers, args.K)
-        for index, value in Top_K:
-            print(f"Index: {index}, Value: {value}")
+        print("Top {} SAE features".format(args.K))
+        with open(os.path.join(args.output_dir, "results.txt"), "w") as f:
+            for index, value in Top_K:
+                print(f"SAE Index: {index}, Cardinality: {value}, Description: {extract_explanation(value)} ", file=f)
+        descend_answers = Top_K(answers, len(answers))
+        plot_SAE_barplot(descend_answers, args.plot_num)
+
 
 if __name__ == "__main__":
     main()
