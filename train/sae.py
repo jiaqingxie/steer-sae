@@ -10,10 +10,15 @@ from vllm import LLM, SamplingParams
 import transformer_lens
 from huggingface_hub import hf_hub_download
 from models.SAE.JumpReLU import JumpReLUSAE
+import sys, os
+
 
 from utils import download_url, load_jsonl, TopK
 import argparse
 import numpy as np
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 transformers.logging.set_verbosity(40)
 
