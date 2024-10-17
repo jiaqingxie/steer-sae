@@ -363,7 +363,7 @@ def main():
 
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
-        input_text = build_prompt(sample["instruction"], N_SHOT, args.COT_FLAG)
+        input_text = build_prompt(sample["instruction"], N_SHOT, args.cot_flag)
         input_text = input_text.strip(" ")
 
 
@@ -389,7 +389,7 @@ def main():
 
             is_cor = is_correct(model_answer, sample["output"])
             answers.append(is_cor)
-            if args.DEBUG:
+            if args.debug:
                 print(f"Full input_text:\n{input_text}\n\n")
             print(
                 f'Question: {sample["instruction"]}\n\n'
