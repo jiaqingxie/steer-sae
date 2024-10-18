@@ -23,8 +23,9 @@ MODEL_NAME_OR_PATH="google/gemma-2-2b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
 LAYER_IDX=20
-PLOT_NUM=10
-K=10
+PLOT_NUM=-1
+K=40
+SAE_ID="20-gemmascope-res-16k"
 TYPE="sae"
 SAE_FILE="google/gemma-scope-2b-pt-res"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
@@ -42,3 +43,4 @@ python -u train/sae.py \
     --param_file ${PARAM_FILE} \
     --transformer_lens \
     --cot_flag \
+    --sae_id ${SAE_ID} \

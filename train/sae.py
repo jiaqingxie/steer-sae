@@ -16,6 +16,8 @@ from models.SAE.JumpReLU import JumpReLUSAE
 import gc
 
 
+
+
 from utils import download_url, load_jsonl, TopK, extract_explanation, plot_SAE_barplot
 import argparse
 import numpy as np
@@ -321,6 +323,12 @@ def parse_args():
         help="number of SAE features"
     )
     parser.add_argument(
+        "--sae_id",
+        type=str,
+        default="20-gemmascope-res-16k",
+        help="sae id in html"
+    )
+    parser.add_argument(
         "--vllm",
         action="store_true",
         help="use vllm or not"
@@ -471,8 +479,8 @@ def main():
         with open(os.path.join(args.output_dir, "results_{}_{}_{}.txt".format(name, args.cot_flag, args.K)), "w") as f:
             print("Top {} SAE features".format(args.K))
             for index, value in Top_K:
-                print(f"SAE Index: {index}, Cardinality: {value}, Description: {extract_explanation(index)} ", file=f)
-
+                print(f"SAE Index: {index}, Cardinality: {value}, Description: {extract_explanation(index, name, args.sae_id)} ", file=f)
+        print("Cardinality of SAE features: {}".format(len(answers)))
         plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, args.output_dir)
 
 
