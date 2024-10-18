@@ -92,7 +92,7 @@ def extract_explanation(idx):
     result = extracted_content[start_pos:end_pos - 3]
     return result
 
-def plot_SAE_barplot(input, top_n):
+def plot_SAE_barplot(input, top_n, cot_flag, model, path):
 
     df = pd.DataFrame(list(input.items()), columns=['Feature', 'Count'])
     df = df.sort_values(by='Count', ascending=False)
@@ -130,5 +130,8 @@ def plot_SAE_barplot(input, top_n):
 
     sns.despine()
     plt.tight_layout()
-    plt.savefig("/cluster/project/sachan/jiaxie/SAE_Math/output/SAE_bar_{}.pdf".format(top_n))
+    if not cot_flag:
+        plt.savefig("{}/SAE_{}_barplot_{}.pdf".format(path, model, top_n))
+    else:
+        plt.savefig("{}/SAE_{}_barplot_{}_COT.pdf".format(path, model, top_n))
 

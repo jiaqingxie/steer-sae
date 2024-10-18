@@ -25,16 +25,13 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 #Settings
 MODEL_NAME_OR_PATH="google/gemma-2-2b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
-#DEBUG=False
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-#COT_FLAG=False
 LAYER_IDX=20
 PLOT_NUM=10
-K=5
+K=10
 TYPE="sae"
 SAE_FILE="google/gemma-scope-2b-pt-res"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
-#VLLM=False
 TRANSFORMER_LENS=True
 
 python -u train/sae.py \

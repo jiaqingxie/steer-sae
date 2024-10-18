@@ -461,7 +461,8 @@ def main():
         with open(os.path.join(args.output_dir, "results.txt"), "w") as f:
             for index, value in Top_K:
                 print(f"SAE Index: {index}, Cardinality: {value}, Description: {extract_explanation(value)} ", file=f)
-        plot_SAE_barplot(answers, args.plot_num)
+        name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
+        plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, args.output_dir)
 
 
 if __name__ == "__main__":
