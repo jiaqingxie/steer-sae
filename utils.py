@@ -73,13 +73,6 @@ def TopK(a: dict, k: int):
     top_k = sorted_list[:k]
     return top_k
 
-def extract_before_backslash(s):
-    backslash_pos = s.find('\\')
-    if backslash_pos != -1:
-        return s[:backslash_pos]
-    else:
-        return s  # Return the whole string if no backslash is found
-
 def extract_explanation(idx):
     def get_dashboard_html(sae_release="gemma-2-2b", sae_id="20-gemmascope-res-16k", feature_idx=6868):
         return html_template.format(sae_release, sae_id, feature_idx)
@@ -90,11 +83,9 @@ def extract_explanation(idx):
     html_content = response.content.decode('utf-8')
     start_pos = html_content.find('"explanations')
     start_pos += len('\"explanations\"')
-    extracted_content = html_content[start_pos:start_pos + 1000]
 
-    start_pos = extracted_content.find('\\\"description\\\"')
-    start_pos += len('\\\"description\\\":\\\"')
-    result = extract_before_backslash(extracted_content[start_pos:start_pos + 1000])
+    end_pos = extracted_content.find('\\\"authorId\\\"')
+    result = extracted_content[start_pos:end_pos-3]
     return result
 
 def plot_SAE_barplot(input, top_n):

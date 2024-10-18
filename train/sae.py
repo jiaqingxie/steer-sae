@@ -461,9 +461,13 @@ def main():
         with open(os.path.join(args.output_dir, "results.txt"), "w") as f:
             for index, value in Top_K:
                 print(f"SAE Index: {index}, Cardinality: {value}, Description: {extract_explanation(value)} ", file=f)
-        descend_answers = Top_K(answers, len(answers))
-        plot_SAE_barplot(descend_answers, args.plot_num)
+        plot_SAE_barplot(answers, args.plot_num)
 
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
