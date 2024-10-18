@@ -76,6 +76,7 @@ def TopK(a: dict, k: int):
 def extract_explanation(idx):
     def get_dashboard_html(sae_release="gemma-2-2b", sae_id="20-gemmascope-res-16k", feature_idx=6868):
         return html_template.format(sae_release, sae_id, feature_idx)
+
     html_template = "https://neuronpedia.org/{}/{}/{}?embed=true&embedexplanation=true&embedplots=true&embedtest=true&height=300"
     html_add = get_dashboard_html(sae_release="gemma-2-2b", sae_id="20-gemmascope-res-16k", feature_idx=idx)
 
@@ -83,9 +84,12 @@ def extract_explanation(idx):
     html_content = response.content.decode('utf-8')
     start_pos = html_content.find('"explanations')
     start_pos += len('\"explanations\"')
+    extracted_content = html_content[start_pos:start_pos + 1000]
 
+    start_pos = extracted_content.find('\\\"description\\\"')
+    start_pos += len('\\\"description\\\":\\\"')
     end_pos = extracted_content.find('\\\"authorId\\\"')
-    result = extracted_content[start_pos:end_pos-3]
+    result = extracted_content[start_pos:end_pos - 3]
     return result
 
 def plot_SAE_barplot(input, top_n):
@@ -93,12 +97,12 @@ def plot_SAE_barplot(input, top_n):
     df = pd.DataFrame(list(input.items()), columns=['Feature', 'Count'])
     df = df.sort_values(by='Count', ascending=False)
 
+
     df_top = df.head(top_n)
     sns.set_theme(style='whitegrid', context='paper', font_scale=1.2)
     blue_gradient = sns.color_palette("Blues_r", n_colors=top_n)
 
-    # Create the bar plot
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(6, 4))
     ax = sns.barplot(
         x='Feature',
         y='Count',
@@ -107,7 +111,7 @@ def plot_SAE_barplot(input, top_n):
         edgecolor='black'
     )
 
-    plt.xticks(rotation=45, ha='right')
+    plt.xticks(rotation=45, ha='center', fontsize=12)
 
     for p in ax.patches:
         ax.annotate(
@@ -120,9 +124,10 @@ def plot_SAE_barplot(input, top_n):
             textcoords='offset points'
         )
 
-    ax.set_title(f'Top {top_n} Feature Count Distribution', fontsize=16, weight='bold')
-    ax.set_xlabel('Features', fontsize=14)
-    ax.set_ylabel('Feature Count', fontsize=14)
+    ax.set_title(f'Top {top_n} SAE Feature Count Distribution', fontsize=16, weight='bold')
+    ax.set_xlabel('SAE Feature Index', fontsize=16)
+    ax.set_ylabel('SAE Feature Count', fontsize=16)
+
     sns.despine()
     plt.tight_layout()
     plt.savefig('/cluster/project/sachan/jiaxie/SAE_Math/output/results.pdf')
