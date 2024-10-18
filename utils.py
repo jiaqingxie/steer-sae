@@ -96,13 +96,13 @@ def plot_SAE_barplot(input, top_n):
 
     df = pd.DataFrame(list(input.items()), columns=['Feature', 'Count'])
     df = df.sort_values(by='Count', ascending=False)
-
+    df['Feature'] = df['Feature'].astype(str) # Important as type of keys are int.
 
     df_top = df.head(top_n)
     sns.set_theme(style='whitegrid', context='paper', font_scale=1.2)
     blue_gradient = sns.color_palette("Blues_r", n_colors=top_n)
 
-    plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(6, 5))
     ax = sns.barplot(
         x='Feature',
         y='Count',
@@ -130,5 +130,5 @@ def plot_SAE_barplot(input, top_n):
 
     sns.despine()
     plt.tight_layout()
-    plt.savefig('/cluster/project/sachan/jiaxie/SAE_Math/output/results.pdf')
+    plt.savefig("/cluster/project/sachan/jiaxie/SAE_Math/output/SAE_bar_{}.pdf".format(top_n))
 
