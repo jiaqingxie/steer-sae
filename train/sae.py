@@ -13,7 +13,7 @@ from vllm import LLM, SamplingParams
 import transformer_lens
 from huggingface_hub import hf_hub_download
 from models.SAE.JumpReLU import JumpReLUSAE
-
+import gc
 
 
 from utils import download_url, load_jsonl, TopK, extract_explanation, plot_SAE_barplot
@@ -425,22 +425,32 @@ def main():
             )
         elif args.type == "sae":
 
-            inputs = tokenizer.encode(input_text, return_tensors="pt", add_special_tokens=True).to("cuda")
-            _, cache = model.run_with_cache(inputs)
+            with torch.no_grad():
+                inputs = tokenizer.encode(
+                    input_text, return_tensors="pt", add_special_tokens=True
+                ).to("cuda")
 
-            target_act = cache[f'blocks.{args.layer_idx}.hook_resid_post'].squeeze()
+                _, cache = model.run_with_cache(
+                    inputs,
+                    names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post'
+                )
 
-            sae_acts = sae.encode(target_act.to(torch.float32))
+                target_act = cache[f'blocks.{args.layer_idx}.hook_resid_post'].squeeze().detach()
 
-            # This is for exploring the last token only
-            top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
-            for ind in top_k_indices:
-                if ind.item() not in answers.keys():
-                    answers[ind.item()] = 1
-                else:
-                    answers[ind.item()] += 1
-            del cache
-            torch.cuda.empty_cache()
+                sae_acts = sae.encode(target_act.to(torch.float32))
+
+                top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
+                for ind in top_k_indices:
+                    answers[ind.item()] = answers.get(ind.item(), 0) + 1
+
+                target_act = target_act.cpu()
+                sae_acts = sae_acts.cpu()
+                del cache
+                del target_act
+                del sae_acts
+                gc.collect()
+                torch.cuda.empty_cache()
+
 
     os.makedirs(args.output_dir, exist_ok=True)
     name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
@@ -461,7 +471,7 @@ def main():
         with open(os.path.join(args.output_dir, "results_{}_{}_{}.txt".format(name, args.cot_flag, args.K)), "w") as f:
             print("Top {} SAE features".format(args.K))
             for index, value in Top_K:
-                print(f"SAE Index: {index}, Cardinality: {value}, Description: {extract_explanation(value)} ", file=f)
+                print(f"SAE Index: {index}, Cardinality: {value}, Description: {extract_explanation(index)} ", file=f)
 
         plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, args.output_dir)
 
