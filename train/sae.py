@@ -443,25 +443,26 @@ def main():
             torch.cuda.empty_cache()
 
     os.makedirs(args.output_dir, exist_ok=True)
+    name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
 
     if args.type == "inference":
-        with open(os.path.join(args.output_dir, "scores.txt"), "w") as f:
+        with open(os.path.join(args.output_dir, "scores_{}_{}.txt".format(name, args.cot_flag)), "w") as f:
             print(
                 f"Num of total question: {len(answers)}, "
                 f"Correct num: {sum(answers)}, "
                 f"Accuracy: {float(sum(answers))/len(answers)}.",
                 file=f,
             )
-        with open(os.path.join(args.output_dir, "results.txt"), "w") as f:
+        with open(os.path.join(args.output_dir, "results_{}_{}.txt".format(name, args.cot_flag)), "w") as f:
             for answer in answers:
                 print(answer, file=f)
     elif args.type == "sae":
         Top_K = TopK(answers, args.K)
-        print("Top {} SAE features".format(args.K))
-        with open(os.path.join(args.output_dir, "results.txt"), "w") as f:
+        with open(os.path.join(args.output_dir, "results_{}_{}_{}.txt".format(name, args.cot_flag, args.K)), "w") as f:
+            print("Top {} SAE features".format(args.K))
             for index, value in Top_K:
                 print(f"SAE Index: {index}, Cardinality: {value}, Description: {extract_explanation(value)} ", file=f)
-        name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
+
         plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, args.output_dir)
 
 

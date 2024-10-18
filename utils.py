@@ -135,3 +135,5 @@ def plot_SAE_barplot(input, top_n, cot_flag, model, path):
     else:
         plt.savefig("{}/SAE_{}_barplot_{}_COT.pdf".format(path, model, top_n))
 
+def cardinality(input):
+    return len(input)
