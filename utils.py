@@ -101,6 +101,8 @@ def plot_SAE_barplot(input_dict, top_n, cot_flag, model, path):
     df['Feature'] = df['Feature'].astype(str)
 
     df = df.sort_values(by='Count', ascending=False).reset_index(drop=True)
+    df = df.head(60)
+
     if top_n == -1:
         top_n = len(input_dict)
     df_top = df.head(top_n)
@@ -127,15 +129,15 @@ def plot_SAE_barplot(input_dict, top_n, cot_flag, model, path):
 
     plt.xticks(rotation=90, ha='center', fontsize=6)
 
-    ax.set_xlabel('SAE Feature Index', fontsize=14)
-    ax.set_ylabel('SAE Feature Count', fontsize=14)
+    ax.set_xlabel('Sorted SAE Feature Index', fontsize=14)
+    ax.set_ylabel('SAE Feature Frequency', fontsize=14)
 
-    ax.set_title('SAE Feature Count Distribution', fontsize=16, weight='bold', y=1.05)
+    ax.set_title('SAE Feature Distribution', fontsize=16, weight='bold', y=1.05)
 
     sns.despine()
     plt.tight_layout()
 
-    ax_inset = inset_axes(ax, width="45%", height="45%", loc='upper right', borderpad=1)
+    ax_inset = inset_axes(ax, width="35%", height="35%", loc='upper right', borderpad=1)
 
     top_gradient = sns.color_palette("Blues_r", n_colors=top_n)
 
@@ -148,23 +150,25 @@ def plot_SAE_barplot(input_dict, top_n, cot_flag, model, path):
         edgecolor='black'
     )
 
+
+
     ax_inset.set_xticklabels(ax_inset.get_xticklabels(), rotation=45, ha='right', fontsize=10)
     ax_inset.set_xlabel('Top {} SAE Features'.format(top_n), fontsize=12)
-    ax_inset.set_ylabel('SAE Feature Count', fontsize=12)
-    ax_inset.set_title('Top {} SAE Feature Count Distribution'.format(top_n), fontsize=14)
+    ax_inset.set_ylabel('SAE Feature Frequency', fontsize=12)
+    ax_inset.set_title('Top {} SAE Feature Distribution'.format(top_n), fontsize=14)
 
     ax_inset.tick_params(axis='both', which='major', labelsize=10)
 
-    for p in ax_inset.patches:
-        ax_inset.annotate(
-            format(p.get_height(), '.0f'),
-            (p.get_x() + p.get_width() / 2., p.get_height()),
-            ha='center',
-            va='bottom',
-            fontsize=10,
-            xytext=(0, 5),
-            textcoords='offset points'
-        )
+    # for p in ax_inset.patches:
+    #     ax_inset.annotate(
+    #         format(p.get_height(), '.0f'),
+    #         (p.get_x() + p.get_width() / 2., p.get_height()),
+    #         ha='center',
+    #         va='bottom',
+    #         fontsize=10,
+    #         xytext=(0, 5),
+    #         textcoords='offset points'
+    #     )
 
     feature_positions = dict(zip(df['Feature'], range(len(df))))
     x_positions = [feature_positions[feature] for feature in df_top['Feature']]
