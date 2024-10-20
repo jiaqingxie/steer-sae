@@ -238,9 +238,10 @@ def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens):
         llm = vllm.LLM(model_name_or_path, download_dir = cache_dir, gpu_memory_utilization = 1, max_model_len=4096, trust_remote_code=True)  # Initialize vLLM
     elif use_transformer_lens:
         torch.set_grad_enabled(False)
-        llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, cache_dir=cache_dir, center_unembed=False)
+        #with torch.no_grad():
+        llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, cache_dir=cache_dir, center_unembed=False, n_devices = 2, torch_dtype=torch.bfloat16)
     else:
-        llm = AutoModelForCausalLM.from_pretrained(model_name_or_path,device_map="auto",torch_dtype=torch.float16, cache_dir=cache_dir, trust_remote_code=True)
+        llm = AutoModelForCausalLM.from_pretrained(model_name_or_path,device_map="auto",torch_dtype=torch.bfloat16, cache_dir=cache_dir, trust_remote_code=True)
     return llm, tokenizer
 
 
@@ -357,6 +358,7 @@ def generate(model, tokenizer, input_text, generate_kwargs):
 def main():
     args = parse_args()
 
+
     seed_everything(args.seed)
 
     test_filepath = os.path.join(args.data_root, "gsm8k_test.jsonl")
@@ -386,7 +388,7 @@ def main():
 
     sae = JumpReLUSAE(params['W_enc'].shape[0], params['W_enc'].shape[1])
     sae.load_state_dict(pt_params)
-    sae.cuda()
+    sae = sae.to("cuda:0")
 
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
@@ -445,6 +447,7 @@ def main():
 
                 target_act = cache[f'blocks.{args.layer_idx}.hook_resid_post'].squeeze().detach()
 
+                target_act = target_act.to("cuda:0")
                 sae_acts = sae.encode(target_act.to(torch.float32))
 
                 top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)

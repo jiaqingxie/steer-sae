@@ -21,7 +21,6 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 #python gsm8k/vllm_main.py --model_name_or_path=google/gemma-2-9b --cache_dir=/cluster/scratch/jiaxie/models/google/gemma-2-9b
 
 
-
 #Settings
 MODEL_NAME_OR_PATH="google/gemma-2-9b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
@@ -31,6 +30,7 @@ PLOT_NUM=10
 K=10
 TYPE="sae"
 SAE_FILE="google/gemma-scope-9b-pt-res"
+SAE_ID="20-gemmascope-res-16k"
 PARAM_FILE="layer_32/width_16k/average_l0_61/params.npz"
 TRANSFORMER_LENS=True
 
@@ -46,3 +46,4 @@ python -u train/sae.py \
     --param_file ${PARAM_FILE} \
     --transformer_lens \
     --cot_flag \
+    --sae_id ${SAE_ID} \
