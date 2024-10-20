@@ -17,22 +17,20 @@ source sae/bin/activate
 
 cd /cluster/project/sachan/jiaxie/SAE_Math
 
-#python gsm8k/vllm_main.py --model_name_or_path=google/gemma-2-9b-it --cache_dir=/cluster/scratch/jiaxie/models/google/gemma-2-9b-it
-#python gsm8k/vllm_main.py --model_name_or_path=google/gemma-2-9b --cache_dir=/cluster/scratch/jiaxie/models/google/gemma-2-9b
 
-
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 #Settings
-MODEL_NAME_OR_PATH="google/gemma-2-9b"
+MODEL_NAME_OR_PATH="google/gemma-2-9b-it"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
-CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b"
+CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b-it"
 LAYER_IDX=31
 PLOT_NUM=10
 N_DEVICES=2
 K=40
 TYPE="sae"
-SAE_FILE="google/gemma-scope-9b-pt-res"
+SAE_FILE="google/gemma-scope-9b-it-res"
 SAE_ID="31-gemmascope-res-16k"
-PARAM_FILE="layer_31/width_16k/average_l0_63/params.npz"
+PARAM_FILE="layer_31/width_16k/average_l0_76/params.npz"
 TRANSFORMER_LENS=True
 
 python -u train/sae.py \
@@ -46,7 +44,6 @@ python -u train/sae.py \
     --sae_file ${SAE_FILE} \
     --param_file ${PARAM_FILE} \
     --transformer_lens \
-    --cot_flag \
     --sae_id ${SAE_ID} \
     --devices ${N_DEVICES} \
     --bfloat16
