@@ -1,0 +1,40 @@
+SAE Index: 7595, Cardinality: 1319, Description: technical terms and keywords related to software or programming concepts 
+SAE Index: 2129, Cardinality: 1319, Description: terms related to clinical studies and statistical analysis in medical research 
+SAE Index: 656, Cardinality: 1319, Description: financial metrics and performance indicators related to companies 
+SAE Index: 10415, Cardinality: 1319, Description: special characters and formatting cues within text 
+SAE Index: 2492, Cardinality: 1318, Description: technical terms related to mechanical and electrical engineering concepts 
+SAE Index: 9155, Cardinality: 1298, Description: expressions related to voting and political opinion 
+SAE Index: 11927, Cardinality: 1258, Description: references to dates and times 
+SAE Index: 13817, Cardinality: 1248, Description: phrases and terms related to business values and teamwork 
+SAE Index: 893, Cardinality: 1231, Description: financial and corporate names or entities 
+SAE Index: 8551, Cardinality: 1198, Description:  data related to legal proceedings and court decisions 
+SAE Index: 15968, Cardinality: 1059, Description: keywords related to software licenses and their usage conditions 
+SAE Index: 10644, Cardinality: 1026, Description:  dialogue and conversational exchanges 
+SAE Index: 11115, Cardinality: 1002, Description: dates and structured data representations 
+SAE Index: 16192, Cardinality: 999, Description:  technical code structures and syntax elements typical in programming languages 
+SAE Index: 14475, Cardinality: 977, Description: phrases related to measuring and assessing quantities or qualities in various contexts 
+SAE Index: 1744, Cardinality: 952, Description:  mathematical terms and expressions 
+SAE Index: 7917, Cardinality: 908, Description: programming syntax operations and control structures 
+SAE Index: 13153, Cardinality: 885, Description: negations and questions indicating uncertainty or doubt 
+SAE Index: 8081, Cardinality: 878, Description:  references to backend and database elements in a programming context 
+SAE Index: 12948, Cardinality: 850, Description: references to resources and recommendations, particularly in relation to apps and helpful information 
+SAE Index: 7007, Cardinality: 811, Description: terms related to automotive diagnostics and their connection methods 
+SAE Index: 5499, Cardinality: 667, Description:  numerical data or values, particularly those related to results or statistical findings 
+SAE Index: 8936, Cardinality: 666, Description: mathematical notations and symbols 
+SAE Index: 15019, Cardinality: 665, Description: descriptions related to structures and architectural features 
+SAE Index: 4789, Cardinality: 650, Description:  elements related to data representation and mathematical expressions 
+SAE Index: 11077, Cardinality: 612, Description:  punctuation marks and spacing patterns in text 
+SAE Index: 2326, Cardinality: 589, Description: references to socioeconomic structures and inequalities 
+SAE Index: 10798, Cardinality: 536, Description:  numerical values associated with data or statistics 
+SAE Index: 12644, Cardinality: 504, Description:  regulatory measures and their implementation timelines 
+SAE Index: 5378, Cardinality: 493, Description:  elements related to coding structure and data types 
+SAE Index: 2477, Cardinality: 463, Description: references to connections with family and friends 
+SAE Index: 6945, Cardinality: 462, Description:  mathematical operations and expressions involving calculations or evaluations 
+SAE Index: 7906, Cardinality: 460, Description:  numerical references and parameters related to processes and data entries 
+SAE Index: 11729, Cardinality: 452, Description:  words related to complex societal systems and hierarchies 
+SAE Index: 7884, Cardinality: 449, Description: mathematical symbols and notation related to variables and parameters in equations 
+SAE Index: 6751, Cardinality: 447, Description:  keywords and phrases related to biological processes and conditions 
+SAE Index: 11946, Cardinality: 441, Description: references to scientific measurements and experimental protocols 
+SAE Index: 7869, Cardinality: 400, Description:  references to programming and file structure 
+SAE Index: 12146, Cardinality: 395, Description: references to governmental laboratories and research initiatives 
+SAE Index: 11392, Cardinality: 392, Description:  LaTeX formatting and syntactical structures in mathematical texts 

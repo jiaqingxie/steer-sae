@@ -1,0 +1,40 @@
+SAE Index: 15153, Cardinality: 1319, Description:  mathematical expressions and relationships 
+SAE Index: 15510, Cardinality: 1319, Description: elements of structured formatting or organization in text, particularly in tables or lists 
+SAE Index: 435, Cardinality: 1319, Description:  mathematical expressions and comparisons 
+SAE Index: 13541, Cardinality: 1319, Description: answers and explanations to logical or mathematical questions 
+SAE Index: 15829, Cardinality: 1319, Description: questions and inquiries, particularly those seeking explanations or answers 
+SAE Index: 6163, Cardinality: 1319, Description: monetary values and their associated attributes in different contexts 
+SAE Index: 9599, Cardinality: 1319, Description:  punctuation marks and numerical values 
+SAE Index: 15846, Cardinality: 1319, Description: mathematical terminology and expressions related to vectors and equations 
+SAE Index: 14352, Cardinality: 1318, Description: terms associated with academic contributions and achievements in mathematics 
+SAE Index: 10640, Cardinality: 1313, Description: information about critiques and evaluations in research studies 
+SAE Index: 6143, Cardinality: 1311, Description: phrases related to medical conditions and treatments 
+SAE Index: 9863, Cardinality: 1271, Description: technical terms related to experimental processes and methodologies 
+SAE Index: 743, Cardinality: 1236, Description:  proper nouns and specific terms related to people or entities 
+SAE Index: 8827, Cardinality: 1235, Description: discussions related to legal and procedural nuances, including claims and sentencing 
+SAE Index: 5736, Cardinality: 1222, Description: references to specific cell lines and their experimental conditions 
+SAE Index: 16045, Cardinality: 1215, Description:  technical terms and phrases related to programming and software development 
+SAE Index: 16117, Cardinality: 1212, Description: words or phrases related to programming and technical documentation 
+SAE Index: 1858, Cardinality: 1210, Description: punctuation marks and sentence endings 
+SAE Index: 11171, Cardinality: 1189, Description: references to titles or distinctions within a lineage or notable families 
+SAE Index: 9639, Cardinality: 1189, Description: words indicative of theoretical discussions or reviews in academic contexts 
+SAE Index: 59, Cardinality: 1177, Description:  references to programming and code-related operations or functions 
+SAE Index: 4504, Cardinality: 1140, Description:  diagrams and schematic representations related to workflows, communication systems, and protocols 
+SAE Index: 9194, Cardinality: 1137, Description: mathematical references and formal assertions within the text 
+SAE Index: 11099, Cardinality: 1052, Description: questions and interactions related to discussions or dialogues 
+SAE Index: 8975, Cardinality: 1046, Description: terms and phrases related to student learning and assessment 
+SAE Index: 5270, Cardinality: 1018, Description:  elements related to quiz structures and their associated answers 
+SAE Index: 8909, Cardinality: 1016, Description: questions and responses in a conversational context 
+SAE Index: 1740, Cardinality: 995, Description: negative sentiment or criticism 
+SAE Index: 12783, Cardinality: 991, Description: references to numerical data and counts related to various contexts 
+SAE Index: 11070, Cardinality: 990, Description: questions about economic or financial metrics 
+SAE Index: 14008, Cardinality: 954, Description: conditional phrases and questions 
+SAE Index: 5115, Cardinality: 770, Description: procedure and instructions in a technical context 
+SAE Index: 386, Cardinality: 714, Description: instances of the letter 'a' and certain associated symbols or terms in mathematical expressions 
+SAE Index: 11133, Cardinality: 657, Description: references to personal experiences and advice 
+SAE Index: 7666, Cardinality: 565, Description:  markers and references commonly used in academic writing 
+SAE Index: 14014, Cardinality: 551, Description: questions that require clarification or validation 
+SAE Index: 9865, Cardinality: 550, Description: references to physiological metrics, specifically body measurements and indices like BMI 
+SAE Index: 12506, Cardinality: 525, Description: concepts related to problems, significant findings, and situations of concern 
+SAE Index: 12441, Cardinality: 499, Description: text related to legal actions and judgements 
+SAE Index: 6631, Cardinality: 462, Description: the beginning of a text or important markers in a document 

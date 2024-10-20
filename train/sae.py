@@ -28,7 +28,6 @@ transformers.logging.set_verbosity(40)
 
 ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
-
 N_SHOT = 8
 
 ANSWER_TRIGGER = "The answer is"
@@ -235,7 +234,11 @@ def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens, n_device
     print(f"Loading model from {model_name_or_path} ...")
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir, trust_remote_code=True)
     if use_vllm:
-        llm = vllm.LLM(model_name_or_path, download_dir = cache_dir, gpu_memory_utilization = 1, max_model_len=4096, trust_remote_code=True)  # Initialize vLLM
+        if bfloat16:
+            llm = vllm.LLM(model_name_or_path, download_dir=cache_dir, gpu_memory_utilization=1, max_model_len=4096,
+                           trust_remote_code=True, torch_dtype=torch.bfloat16)
+        else:
+            llm = vllm.LLM(model_name_or_path, download_dir = cache_dir, gpu_memory_utilization = 1, max_model_len=4096, trust_remote_code=True)  # Initialize vLLM
     elif use_transformer_lens:
         torch.set_grad_enabled(False)
         #with torch.no_grad():

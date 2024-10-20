@@ -4,7 +4,7 @@
 #SBATCH --error=/cluster/project/sachan/jiaxie/results/%j.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
-#SBATCH --gpus=rtx_3090:2
+#SBATCH --gpus=rtx_3090:1
 #SBATCH --time=3:00:00
 
 module load eth_proxy
@@ -25,9 +25,9 @@ DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b-it"
 LAYER_IDX=31
 PLOT_NUM=10
-N_DEVICES=2
+N_DEVICES=1
 K=40
-TYPE="sae"
+TYPE="inference"
 SAE_FILE="google/gemma-scope-9b-it-res"
 SAE_ID="31-gemmascope-res-16k"
 PARAM_FILE="layer_31/width_16k/average_l0_76/params.npz"
@@ -40,11 +40,9 @@ python -u train/sae.py \
     --layer_idx ${LAYER_IDX} \
     --plot_num ${PLOT_NUM} \
     --K ${K} \
-    --cot_flag \
     --type ${TYPE} \
     --sae_file ${SAE_FILE} \
     --param_file ${PARAM_FILE} \
-    --transformer_lens \
     --sae_id ${SAE_ID} \
     --devices ${N_DEVICES} \
     --bfloat16
