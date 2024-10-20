@@ -231,7 +231,7 @@ def seed_everything(seed: int):
     torch.backends.cudnn.benchmark = True
 
 
-def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens):
+def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens, n_devices, bfloat16):
     print(f"Loading model from {model_name_or_path} ...")
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir, trust_remote_code=True)
     if use_vllm:
@@ -239,7 +239,10 @@ def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens):
     elif use_transformer_lens:
         torch.set_grad_enabled(False)
         #with torch.no_grad():
-        llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, cache_dir=cache_dir, center_unembed=False, n_devices = 2, torch_dtype=torch.bfloat16)
+        if bfloat16:
+            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, cache_dir=cache_dir, center_unembed=False, n_devices = n_devices, torch_dtype=torch.bfloat16)
+        else:
+            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, cache_dir=cache_dir, center_unembed=False, n_devices = n_devices)
     else:
         llm = AutoModelForCausalLM.from_pretrained(model_name_or_path,device_map="auto",torch_dtype=torch.bfloat16, cache_dir=cache_dir, trust_remote_code=True)
     return llm, tokenizer
@@ -288,6 +291,11 @@ def parse_args():
         help="use chain of thought or not"
     )
     parser.add_argument(
+        "--bfloat16",
+        action="store_true",
+        help="floating point precision 16 bits"
+    )
+    parser.add_argument(
         "--layer_idx",
         type=int,
         default=20,
@@ -298,6 +306,12 @@ def parse_args():
         type=int,
         default=5,
         help="Top K SAE features"
+    )
+    parser.add_argument(
+        "--devices",
+        type=int,
+        default=1,
+        help="number of GPUs to use"
     )
     parser.add_argument(
         "--type",
@@ -373,7 +387,7 @@ def main():
 
     list_data_dict = load_jsonl(test_filepath, instruction="question", output="answer")
 
-    model, tokenizer = load(args.model_name_or_path, args.cache_dir, args.vllm, args.transformer_lens)
+    model, tokenizer = load(args.model_name_or_path, args.cache_dir, args.vllm, args.transformer_lens, args.devices, args.bfloat16)
 
     path_to_params = hf_hub_download(
         repo_id=args.sae_file,
@@ -384,7 +398,6 @@ def main():
 
     params = np.load(path_to_params)
     pt_params = {k: torch.from_numpy(v).cuda() for k, v in params.items()}
-    # pt_params = {k: torch.from_numpy(v) for k, v in params.items()}
 
     sae = JumpReLUSAE(params['W_enc'].shape[0], params['W_enc'].shape[1])
     sae.load_state_dict(pt_params)
@@ -394,7 +407,6 @@ def main():
     for sample in tqdm(list_data_dict):
         input_text = build_prompt(sample["instruction"], N_SHOT, args.cot_flag)
         input_text = input_text.strip(" ")
-
 
         if args.vllm:
             sampling_params = SamplingParams(
