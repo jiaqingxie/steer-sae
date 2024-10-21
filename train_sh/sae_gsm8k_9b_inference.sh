@@ -20,17 +20,17 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 #Settings
-MODEL_NAME_OR_PATH="google/gemma-2-9b-it"
+MODEL_NAME_OR_PATH="google/gemma-2-9b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
-CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b-it"
+CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b"
 LAYER_IDX=31
 PLOT_NUM=10
 N_DEVICES=1
 K=40
 TYPE="inference"
-SAE_FILE="google/gemma-scope-9b-it-res"
+SAE_FILE="google/gemma-scope-9b-pt-res"
 SAE_ID="31-gemmascope-res-16k"
-PARAM_FILE="layer_31/width_16k/average_l0_76/params.npz"
+PARAM_FILE="layer_31/width_16k/average_l0_63/params.npz"
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \

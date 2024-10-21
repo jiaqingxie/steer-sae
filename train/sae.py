@@ -236,7 +236,7 @@ def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens, n_device
     if use_vllm:
         if bfloat16:
             llm = vllm.LLM(model_name_or_path, download_dir=cache_dir, gpu_memory_utilization=1, max_model_len=4096,
-                           trust_remote_code=True, torch_dtype=torch.bfloat16)
+                           trust_remote_code=True, dtype=torch.bfloat16)
         else:
             llm = vllm.LLM(model_name_or_path, download_dir = cache_dir, gpu_memory_utilization = 1, max_model_len=4096, trust_remote_code=True)  # Initialize vLLM
     elif use_transformer_lens:
