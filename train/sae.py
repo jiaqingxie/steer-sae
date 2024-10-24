@@ -52,7 +52,7 @@ def is_correct(model_answer, answer):
         return model_answer == gt_answer or float(model_answer) == float(gt_answer)
 
 
-def create_demo_text(n_shot=8, cot_flag=True, dataset):
+def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
     examples = get_examples()
     question, chain, answer = [], [], []
     for q, c, a in examples[dataset]:
