@@ -19,7 +19,7 @@ from prompts.prompts import get_examples
 
 
 
-from utils import download_url, load_jsonl, TopK, extract_explanation, plot_SAE_barplot
+from utils import *
 import argparse
 import numpy as np
 
@@ -30,17 +30,27 @@ transformers.logging.set_verbosity(40)
 ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
 N_SHOT = 8
-
 ANSWER_TRIGGER = "The answer is"
 
-def extract_answer_from_output(completion):
-    match = ANS_RE.search(completion)
-    if match:
-        match_str = match.group(1).strip()
-        match_str = match_str.replace(",", "")
-        return match_str
-    else:
-        return INVALID_ANS
+def extract_answer_from_output(completion, dataset):
+    if dataset == "gsm8k":
+        match = ANS_RE.search(completion)
+        if match:
+            match_str = match.group(1).strip()
+            match_str = match_str.replace(",", "")
+            return match_str
+        else:
+            return INVALID_ANS
+    elif dataset in ["svamp", "mawps", "aqua"]:
+        return completion
+    elif dataset == "asdiv":
+        match = re.match(r'\d+', completion)
+        if match:
+            match_str = match.group()
+            match_str = match_str.replace(",", "")
+            return match_str
+        else:
+            return INVALID_ANS
 
 
 def is_correct(model_answer, answer):
@@ -48,6 +58,8 @@ def is_correct(model_answer, answer):
     assert gt_answer != INVALID_ANS
     if model_answer == INVALID_ANS:
         return False
+    elif type(model_answer) == str or gt_answer == str:
+        return model_answer == gt_answer
     else:
         return model_answer == gt_answer or float(model_answer) == float(gt_answer)
 
@@ -58,7 +70,7 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
     for q, c, a in examples[dataset]:
         question.append(q)
         chain.append(c)
-        answer.append(a)
+        answer.append(str(a))
 
     # randomize order of the examples ...
     index_list = list(range(len(question)))
@@ -305,17 +317,22 @@ def main():
 
     seed_everything(args.seed)
 
-    test_filepath = os.path.join(args.data_root, "gsm8k_test.jsonl")
+    test_filepath = os.path.join(args.data_root, args.dataset + "_test.jsonl")
     if not os.path.exists(test_filepath):
         download_url(
-            "https://raw.githubusercontent.com/openai/"
-            "grade-school-math/2909d34ef28520753df82a2234c357259d254aa8/"
-            "grade_school_math/data/test.jsonl",
+            test_url[args.dataset],
             args.data_root,
         )
         os.rename(os.path.join(args.data_root, "test.jsonl"), test_filepath)
 
-    list_data_dict = load_jsonl(test_filepath, instruction="question", output="answer")
+    list_data_dict = []
+    if len(pair[args.dataset]) > 2:
+        question, body, answer = pair[args.dataset]
+        list_data_dict = load_jsonl(test_filepath, instruction=question, input=body, output=answer)
+    else:
+        question, answer = pair[args.dataset]
+        list_data_dict = load_jsonl(test_filepath, instruction=question, output=answer)
+
 
     model, tokenizer = load(args.model_name_or_path, args.cache_dir, args.vllm, args.transformer_lens, args.devices, args.bfloat16)
 
@@ -352,7 +369,7 @@ def main():
 
             )
         else:
-            sampling_params = dict(max_new_tokens=256, top_p=0.95, temperature=0.8)
+            sampling_params = dict(max_new_tokens=256, top_p=1, temperature=0)
 
         if args.type == "inference":
             model_completion = generate(model, tokenizer, input_text, sampling_params)

@@ -14,6 +14,30 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
+
+test_url = {
+    "gsm8k": "https://raw.githubusercontent.com/openai/grade-school-math/"
+             "2909d34ef28520753df82a2234c357259d254aa8/grade_school_math/data/test.jsonl",
+    "mawps": "https://raw.githubusercontent.com/QwenLM/Qwen2.5-Math/"
+              "e128aa06871c7a0eeedc2ab21b69459bcb24c4fb/evaluation/data/mawps/test.jsonl",
+    "svamp": "https://raw.githubusercontent.com/QwenLM/Qwen2.5-Math/"
+             "e128aa06871c7a0eeedc2ab21b69459bcb24c4fb/evaluation/data/svamp/test.jsonl",
+    "aqua":  "https://raw.githubusercontent.com/QwenLM/Qwen2.5-Math/"
+             "e128aa06871c7a0eeedc2ab21b69459bcb24c4fb/evaluation/data/aqua/test.jsonl",
+    "asdiv":  "https://raw.githubusercontent.com/QwenLM/Qwen2.5-Math/"
+             "e128aa06871c7a0eeedc2ab21b69459bcb24c4fb/evaluation/data/asdiv/test.jsonl"
+}
+
+pair = {
+    "gsm8k": ["question", "answer"],
+    "mawps": ["input", "target"],
+    "svamp": ["Question", "Body", "Answer"],
+    "aqua": ["question", "options", "correct"],
+    "asdiv": ["question", "body", "answer"]
+
+}
+
+
 def download_url(url: str, folder="folder"):
     """
     Downloads the content of an url to a folder. Modified from \
@@ -59,14 +83,20 @@ def load_jsonl(
     with open_func(file_path, "r") as f:
         for line in f:
             item = json.loads(line)
+            instruction_value = item.get(instruction, "")
+            input_value = item.get(input, "")
+
+            # Prepend input to instruction if input is not empty
+            if input_value:
+                instruction_value = input_value + instruction_value
+
             new_item = dict(
-                instruction=item[instruction] if instruction in item else None,
-                input=item[input] if input in item else None,
-                output=item[output] if output in item else None,
-                category=item[category] if category in item else None,
+                instruction=instruction_value,
+                input=item.get(input, None),
+                output=item.get(output, None),
+                category=item.get(category, None),
             )
-            item = new_item
-            list_data_dict.append(item)
+            list_data_dict.append(new_item)
     return list_data_dict
 
 
