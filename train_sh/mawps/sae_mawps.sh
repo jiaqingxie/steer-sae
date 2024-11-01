@@ -20,7 +20,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings
 MODEL_NAME_OR_PATH="google/gemma-2-2b"
-DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/svamp/data"
+DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
 LAYER_IDX=20
 PLOT_NUM=10
@@ -30,7 +30,7 @@ SAE_FILE="google/gemma-scope-2b-pt-res"
 SAE_ID="20-gemmascope-res-16k"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
 TRANSFORMER_LENS=True
-DATASET="svamp"
+DATASET="mawps"
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \

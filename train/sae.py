@@ -53,19 +53,22 @@ def extract_answer_from_output(completion, dataset):
             return INVALID_ANS
 
 
-def is_correct(model_answer, answer):
-    gt_answer = extract_answer_from_output(answer)
+def is_correct(model_answer, answer, dataset):
+    gt_answer = extract_answer_from_output(answer, dataset)
     assert gt_answer != INVALID_ANS
+
     if model_answer == INVALID_ANS:
         return False
-    elif type(model_answer) == str or gt_answer == str:
-        return model_answer == gt_answer
-    else:
-        return model_answer == gt_answer or float(model_answer) == float(gt_answer)
 
+    try:
+        model_answer_float = float(model_answer)
+        gt_answer_float = float(gt_answer)
+        return model_answer_float == gt_answer_float
+    except (ValueError, TypeError):
+        return model_answer == gt_answer # deal with multiple-choice questions
 
 def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
-    examples = get_examples()
+    examples = get_examples(dataset)
     question, chain, answer = [], [], []
     for q, c, a in examples[dataset]:
         question.append(q)
@@ -295,6 +298,11 @@ def parse_args():
         action="store_true",
         help="use Transformer Lens or not"
     )
+    parser.add_argument(
+        "--cumulative",
+        action="store_true",
+        help="use cumulative sae features or not"
+    )
     parser.add_argument("--load", type=str, default=None, help="load quantized model")
 
     args = parser.parse_args()
@@ -350,8 +358,14 @@ def main():
     sae.load_state_dict(pt_params)
     sae = sae.to("cuda:0")
 
+    cum = []
+    cnt = 0
+    if args.cumulative:
+        cum = torch.zeros_like(sae_acts[-1])
+
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
+        cnt+=1
         input_text = build_prompt(sample["instruction"], N_SHOT, args.cot_flag, args.dataset)
         input_text = input_text.strip(" ")
 
@@ -375,13 +389,13 @@ def main():
             model_completion = generate(model, tokenizer, input_text, sampling_params)
             model_answer = clean_answer(model_completion)
 
-            is_cor = is_correct(model_answer, sample["output"])
+            is_cor = is_correct(model_answer, sample["output"], args.dataset)
             answers.append(is_cor)
             if args.debug:
                 print(f"Full input_text:\n{input_text}\n\n")
             print(
                 f'Question: {sample["instruction"]}\n\n'
-                f'Answers: {extract_answer_from_output(sample["output"])}\n\n'
+                f'Answers: {extract_answer_from_output(sample["output"], args.dataset)}\n\n'
                 f"Model Answers: {model_answer}\n\n"
                 f"Model Completion: {model_completion}\n\n"
                 f"Is correct: {is_cor}\n\n"
@@ -409,9 +423,16 @@ def main():
                 target_act = target_act.to("cuda:0")
                 sae_acts = sae.encode(target_act.to(torch.float32))
 
+
                 top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
                 for ind in top_k_indices:
                     answers[ind.item()] = answers.get(ind.item(), 0) + 1
+
+                if args.cumulative:
+                    if cnt:
+                        cum += sae_acts[-1]
+                    else:
+                        cum = sae_acts[-1]
 
                 target_act = target_act.cpu()
                 sae_acts = sae_acts.cpu()
@@ -421,30 +442,42 @@ def main():
                 gc.collect()
                 torch.cuda.empty_cache()
 
+    if args.cumulative:
+        answers = []
+        top_k_values, top_k_indices = torch.topk(cum, args.K)
+        for ind in top_k_indices:
+            answers[ind.item()] = answers.get(ind.item(), 0) + 1
 
     os.makedirs(args.output_dir, exist_ok=True)
     name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
 
     if args.type == "inference":
-        with open(os.path.join(args.output_dir + '/' + args.dataset, "scores_{}_{}.txt".format(name, args.cot_flag)), "w") as f:
+        output_path = os.path.join(args.output_dir, args.dataset)
+        os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
+        with open(os.path.join(output_path, f"scores_{name}_{args.cot_flag}.txt"), "w") as f:
             print(
                 f"Num of total question: {len(answers)}, "
                 f"Correct num: {sum(answers)}, "
-                f"Accuracy: {float(sum(answers))/len(answers)}.",
+                f"Accuracy: {float(sum(answers)) / len(answers)}.",
                 file=f,
             )
-        with open(os.path.join(args.output_dir + '/' + args.dataset , "results_{}_{}.txt".format(name, args.cot_flag)), "w") as f:
+        with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}.txt"), "w") as f:
             for answer in answers:
                 print(answer, file=f)
     elif args.type == "sae":
         Top_K = TopK(answers, args.K)
-        with open(os.path.join(args.output_dir + '/' + args.dataset, "results_{}_{}_{}.txt".format(name, args.cot_flag, args.K)), "w") as f:
-            print("Top {} SAE features".format(args.K))
+        output_path = os.path.join(args.output_dir, args.dataset)
+        os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
+        with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.K}.txt"), "w") as f:
+            print(f"Top {args.K} SAE features")
             for index, value in Top_K:
-                print(f"SAE Index: {index}, Cardinality: {value}, Description: {extract_explanation(index, name, args.sae_id)} ", file=f)
-        print("Cardinality of SAE features: {}".format(len(answers)))
-        plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, args.output_dir + '/' + args.dataset)
-
+                print(
+                    f"SAE Index: {index}, Cardinality: {value}, "
+                    f"Description: {extract_explanation(index, name, args.sae_id)}",
+                    file=f,
+                )
+        print(f"Cardinality of SAE features: {len(answers)}")
+        plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, output_path)
 
 if __name__ == "__main__":
     main()

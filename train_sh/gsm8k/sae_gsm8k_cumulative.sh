@@ -17,20 +17,23 @@ source sae/bin/activate
 
 cd /cluster/project/sachan/jiaxie/SAE_Math
 
+#python gsm8k/vllm_main.py --model_name_or_path=google/gemma-2-9b-it --cache_dir=/cluster/scratch/jiaxie/models/google/gemma-2-9b-it
+#python gsm8k/vllm_main.py --model_name_or_path=google/gemma-2-9b --cache_dir=/cluster/scratch/jiaxie/models/google/gemma-2-9b
+
+
 
 #Settings
 MODEL_NAME_OR_PATH="google/gemma-2-2b"
-DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/svamp/data"
+DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
 LAYER_IDX=20
-PLOT_NUM=10
-K=40
+PLOT_NUM=5
+K=10
 TYPE="sae"
 SAE_FILE="google/gemma-scope-2b-pt-res"
 SAE_ID="20-gemmascope-res-16k"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
 TRANSFORMER_LENS=True
-DATASET="svamp"
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -44,4 +47,5 @@ python -u train/sae.py \
     --param_file ${PARAM_FILE} \
     --transformer_lens \
     --sae_id ${SAE_ID} \
-    --dataset ${DATASET} \
+    --cumulative \
+

@@ -86,9 +86,12 @@ def load_jsonl(
             instruction_value = item.get(instruction, "")
             input_value = item.get(input, "")
 
+            if type(input_value) == list:
+                input_value = ", ".join(input_value)
+
             # Prepend input to instruction if input is not empty
             if input_value:
-                instruction_value = input_value + instruction_value
+                instruction_value = input_value + " " + instruction_value
 
             new_item = dict(
                 instruction=instruction_value,

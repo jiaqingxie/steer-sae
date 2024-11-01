@@ -20,17 +20,16 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings
 MODEL_NAME_OR_PATH="google/gemma-2-2b"
-DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/svamp/data"
+DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
 LAYER_IDX=20
 PLOT_NUM=10
 K=40
-TYPE="sae"
+TYPE="inference"
 SAE_FILE="google/gemma-scope-2b-pt-res"
 SAE_ID="20-gemmascope-res-16k"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
-TRANSFORMER_LENS=True
-DATASET="svamp"
+DATASET="aqua"
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -42,6 +41,8 @@ python -u train/sae.py \
     --type ${TYPE} \
     --sae_file ${SAE_FILE} \
     --param_file ${PARAM_FILE} \
-    --transformer_lens \
     --sae_id ${SAE_ID} \
     --dataset ${DATASET} \
+    --bfloat16 \
+    --vllm \
+    --cot_flag \
