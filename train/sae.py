@@ -360,12 +360,11 @@ def main():
 
     cum = []
     cnt = 0
-    if args.cumulative:
-        cum = torch.zeros_like(sae_acts[-1])
+    top_k_values, top_k_indices = 0, 0
 
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
-        cnt+=1
+
         input_text = build_prompt(sample["instruction"], N_SHOT, args.cot_flag, args.dataset)
         input_text = input_text.strip(" ")
 
@@ -422,26 +421,29 @@ def main():
 
                 target_act = target_act.to("cuda:0")
                 sae_acts = sae.encode(target_act.to(torch.float32))
+                target_act = target_act.cpu()
+                sae_acts = sae_acts.cpu()
 
 
-                top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
-                for ind in top_k_indices:
-                    answers[ind.item()] = answers.get(ind.item(), 0) + 1
+
 
                 if args.cumulative:
                     if cnt:
                         cum += sae_acts[-1]
                     else:
                         cum = sae_acts[-1]
+                else:
+                    top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
+                    for ind in top_k_indices:
+                        answers[ind.item()] = answers.get(ind.item(), 0) + 1
 
-                target_act = target_act.cpu()
-                sae_acts = sae_acts.cpu()
+
                 del cache
                 del target_act
                 del sae_acts
                 gc.collect()
                 torch.cuda.empty_cache()
-
+        cnt += 1
     if args.cumulative:
         answers = []
         top_k_values, top_k_indices = torch.topk(cum, args.K)
@@ -467,6 +469,10 @@ def main():
     elif args.type == "sae":
         Top_K = TopK(answers, args.K)
         output_path = os.path.join(args.output_dir, args.dataset)
+        if args.cumulative:
+            output_path= os.path.join(output_path, "cumulative")
+        else:
+            output_path= os.path.join(output_path, "non-cumulative")
         os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
         with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.K}.txt"), "w") as f:
             print(f"Top {args.K} SAE features")
