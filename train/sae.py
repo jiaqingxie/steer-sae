@@ -445,10 +445,10 @@ def main():
                 torch.cuda.empty_cache()
         cnt += 1
     if args.cumulative:
-        answers = []
+        answers = {}
         top_k_values, top_k_indices = torch.topk(cum, args.K)
-        for ind in top_k_indices:
-            answers[ind.item()] = answers.get(ind.item(), 0) + 1
+        for ind, val in zip(top_k_indices, top_k_values):
+            answers[ind.item()] = val.item()
 
     os.makedirs(args.output_dir, exist_ok=True)
     name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
