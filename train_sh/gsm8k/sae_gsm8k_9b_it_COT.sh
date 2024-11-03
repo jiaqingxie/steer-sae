@@ -21,12 +21,12 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 #Settings
 MODEL_NAME_OR_PATH="google/gemma-2-9b-it"
-DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/gsm8k/data"
+DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b-it"
 LAYER_IDX=31
-PLOT_NUM=10
+PLOT_NUM=5
 N_DEVICES=2
-K=40
+K=10
 TYPE="sae"
 SAE_FILE="google/gemma-scope-9b-it-res"
 SAE_ID="31-gemmascope-res-16k"
@@ -47,4 +47,4 @@ python -u train/sae.py \
     --transformer_lens \
     --sae_id ${SAE_ID} \
     --devices ${N_DEVICES} \
-    --bfloat16
+    --bfloat16 \
