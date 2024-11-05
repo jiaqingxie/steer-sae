@@ -1,0 +1,10 @@
+SAE Index: 7595, Cardinality: 115095.8359375, Description: technical terms and keywords related to software or programming concepts
+SAE Index: 2129, Cardinality: 72987.65625, Description: terms related to clinical studies and statistical analysis in medical research
+SAE Index: 2492, Cardinality: 59979.64453125, Description: technical terms related to mechanical and electrical engineering concepts
+SAE Index: 9155, Cardinality: 39405.578125, Description: expressions related to voting and political opinion
+SAE Index: 10415, Cardinality: 37327.4296875, Description: special characters and formatting cues within text
+SAE Index: 656, Cardinality: 32849.640625, Description: financial metrics and performance indicators related to companies
+SAE Index: 8551, Cardinality: 27190.724609375, Description:  data related to legal proceedings and court decisions
+SAE Index: 13817, Cardinality: 26387.224609375, Description: phrases and terms related to business values and teamwork
+SAE Index: 11927, Cardinality: 24181.330078125, Description: references to dates and times
+SAE Index: 15968, Cardinality: 20495.142578125, Description: keywords related to software licenses and their usage conditions

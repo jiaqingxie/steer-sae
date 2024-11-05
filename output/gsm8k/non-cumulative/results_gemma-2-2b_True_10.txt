@@ -1,0 +1,10 @@
+SAE Index: 15510, Cardinality: 1319, Description: elements of structured formatting or organization in text, particularly in tables or lists
+SAE Index: 15153, Cardinality: 1319, Description:  mathematical expressions and relationships
+SAE Index: 435, Cardinality: 1319, Description:  mathematical expressions and comparisons
+SAE Index: 13541, Cardinality: 1319, Description: answers and explanations to logical or mathematical questions
+SAE Index: 15829, Cardinality: 1317, Description: questions and inquiries, particularly those seeking explanations or answers
+SAE Index: 6163, Cardinality: 1206, Description: monetary values and their associated attributes in different contexts
+SAE Index: 14352, Cardinality: 1072, Description: terms associated with academic contributions and achievements in mathematics
+SAE Index: 6143, Cardinality: 958, Description: phrases related to medical conditions and treatments
+SAE Index: 12783, Cardinality: 570, Description: references to numerical data and counts related to various contexts
+SAE Index: 16045, Cardinality: 470, Description:  technical terms and phrases related to programming and software development

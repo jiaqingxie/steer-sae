@@ -1,0 +1,10 @@
+SAE Index: 2995, Cardinality: 83100.1640625, Description: different types of data structures and their attributes
+SAE Index: 15219, Cardinality: 69326.5625, Description:  elements of mathematical expressions and functions
+SAE Index: 6096, Cardinality: 63735.22265625, Description:  phrases and contexts that indicate differing interpretations or meanings
+SAE Index: 5679, Cardinality: 60048.4921875, Description: references to specific data science tools and technologies
+SAE Index: 13390, Cardinality: 57111.79296875, Description:  phrases and terms related to legal analysis and reasoning in court cases
+SAE Index: 10807, Cardinality: 52804.27734375, Description: specialized formatting or notation related to scientific or mathematical expressions
+SAE Index: 5237, Cardinality: 48833.9140625, Description: terms related to scientific research methodologies and findings, particularly in a biological context
+SAE Index: 9323, Cardinality: 46706.46875, Description:  mathematical expressions or calculations
+SAE Index: 13368, Cardinality: 44921.5859375, Description:  punctuation marks and formatting symbols
+SAE Index: 2967, Cardinality: 38418.03125, Description: technical terms and coding references related to programming and web development

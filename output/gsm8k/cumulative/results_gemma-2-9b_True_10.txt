@@ -1,0 +1,10 @@
+SAE Index: 11927, Cardinality: 93399.9140625, Description: references to dates and times
+SAE Index: 11402, Cardinality: 81589.0546875, Description: punctuation marks, particularly commas
+SAE Index: 7137, Cardinality: 62612.640625, Description:  textual elements associated with tasks, qualifications, and organizational roles
+SAE Index: 15160, Cardinality: 51755.55078125, Description: symbols and formatting markers used in mathematical or technical expressions
+SAE Index: 9706, Cardinality: 48611.02734375, Description: keywords associated with impending personnel changes and government operations
+SAE Index: 12413, Cardinality: 48257.45703125, Description:  numerical data or statistics related to research findings
+SAE Index: 2477, Cardinality: 41985.484375, Description: references to connections with family and friends
+SAE Index: 7595, Cardinality: 35480.5546875, Description: technical terms and keywords related to software or programming concepts
+SAE Index: 8280, Cardinality: 35014.74609375, Description: references to technical specifications and components of mechanical devices
+SAE Index: 15019, Cardinality: 32897.73046875, Description: descriptions related to structures and architectural features
