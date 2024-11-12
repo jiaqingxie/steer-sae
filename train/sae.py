@@ -31,6 +31,8 @@ ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
 N_SHOT = 8
 ANSWER_TRIGGER = "The answer is"
+ANSWER_TRIGGER_2 = "kasarigan: "
+ANSWER_TRIGGER_3 = "automáticamente se le da la respuesta de"
 
 def extract_answer_from_output(completion, dataset):
     if dataset == "gsm8k":
@@ -117,11 +119,21 @@ def build_prompt(input_text, n_shot, cot_flag, dataset):
     return input_text_prompt
 
 
-def clean_answer(model_pred):
-    generated_text = model_pred.outputs[0].text
-
+def clean_answer(model_pred, sae=False):
+    if not sae:
+        generated_text = model_pred.outputs[0].text
+    else:
+        generated_text = model_pred
     generated_text = generated_text.lower()
-    preds = generated_text.split(ANSWER_TRIGGER.lower())
+    if ANSWER_TRIGGER in generated_text:
+        preds = generated_text.split(ANSWER_TRIGGER.lower())
+    elif ANSWER_TRIGGER in generated_text:
+        preds = generated_text.split(ANSWER_TRIGGER_2.lower())
+    elif ANSWER_TRIGGER_3 in generated_text:
+        preds = generated_text.split(ANSWER_TRIGGER_3.lower())
+    else:
+        preds = generated_text.split(ANSWER_TRIGGER.lower())
+
 
 
     if preds is not None:
@@ -241,6 +253,12 @@ def parse_args():
         help="layer to choose from"
     )
     parser.add_argument(
+        "--coeff",
+        type=int,
+        default=400,
+        help="coefficient for steering vectors"
+    )
+    parser.add_argument(
         "--K",
         type=int,
         default=5,
@@ -283,6 +301,12 @@ def parse_args():
         help="number of SAE features"
     )
     parser.add_argument(
+        "--sae_idx",
+        type=int,
+        default=15153,
+        help="SAE feature index"
+    )
+    parser.add_argument(
         "--sae_id",
         type=str,
         default="20-gemmascope-res-16k",
@@ -302,6 +326,16 @@ def parse_args():
         "--cumulative",
         action="store_true",
         help="use cumulative sae features or not"
+    )
+    parser.add_argument(
+        "--steer_vec_sae",
+        action="store_true",
+        help="use sae vectors as steering vectors"
+    )
+    parser.add_argument(
+        "--grid_search",
+        action="store_true",
+        help="grid searching coefficients for sae"
     )
     parser.add_argument("--load", type=str, default=None, help="load quantized model")
 
@@ -385,8 +419,54 @@ def main():
             sampling_params = dict(max_new_tokens=256, top_p=1, temperature=0)
 
         if args.type == "inference":
-            model_completion = generate(model, tokenizer, input_text, sampling_params)
-            model_answer = clean_answer(model_completion)
+            if args.steer_vec_sae:
+                steering_vector = sae.W_dec[args.sae_idx]
+                if args.grid_search:
+                    coeff = args.coeff
+                sampling_kwargs = sampling_params
+                steering_on = True
+                eos_token_id = tokenizer.encode("\n\n", add_special_tokens=False)
+
+                def steering_hook(resid_pre, hook):
+                    if resid_pre.shape[1] == 1:
+                        return
+
+                    if steering_on:
+                        # using our steering vector and applying the coefficient
+                        resid_pre[:, :, :] += coeff * steering_vector
+
+                def hooked_generate(prompt_batch, fwd_hooks=[], seed=None, **kwargs):
+                    if seed is not None:
+                        torch.manual_seed(seed)
+
+                    with model.hooks(fwd_hooks=fwd_hooks):
+                        tokenized = model.to_tokens(prompt_batch)
+                        result = model.generate(
+                            stop_at_eos=True,
+                            input=tokenized,
+                            do_sample=True,
+                            eos_token_id=eos_token_id,
+                            **kwargs
+                        )
+                    return result
+
+                def run_generate(input_text):
+                    model.reset_hooks()
+                    editing_hooks = [(f"blocks.{args.layer_idx}.hook_resid_post", steering_hook)]
+                    res = hooked_generate(
+                        [input_text], editing_hooks, seed=None, **sampling_kwargs
+                    )
+
+                    # Print results, removing the ugly beginning of sequence token
+                    token_len = model.to_tokens(input_text).size(1)
+                    answer = model.to_string(res[:, token_len:])
+                    answer = "".join(answer)
+                    return answer
+
+                model_answer = clean_answer(run_generate(input_text), True)
+            else:
+                model_completion = generate(model, tokenizer, input_text, sampling_params)
+                model_answer = clean_answer(model_completion)
 
             is_cor = is_correct(model_answer, sample["output"], args.dataset)
             answers.append(is_cor)
@@ -396,7 +476,6 @@ def main():
                 f'Question: {sample["instruction"]}\n\n'
                 f'Answers: {extract_answer_from_output(sample["output"], args.dataset)}\n\n'
                 f"Model Answers: {model_answer}\n\n"
-                f"Model Completion: {model_completion}\n\n"
                 f"Is correct: {is_cor}\n\n"
             )
 
@@ -424,9 +503,6 @@ def main():
                 target_act = target_act.cpu()
                 sae_acts = sae_acts.cpu()
 
-
-
-
                 if args.cumulative:
                     if cnt:
                         cum += sae_acts[-1]
@@ -443,6 +519,7 @@ def main():
                 del sae_acts
                 gc.collect()
                 torch.cuda.empty_cache()
+
         cnt += 1
     if args.cumulative:
         answers = {}
@@ -454,19 +531,37 @@ def main():
     name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
 
     if args.type == "inference":
-        output_path = os.path.join(args.output_dir, args.dataset)
-        os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
-        with open(os.path.join(output_path, f"scores_{name}_{args.cot_flag}.txt"), "w") as f:
-            print(
-                f"Num of total question: {len(answers)}, "
-                f"Correct num: {sum(answers)}, "
-                f"Accuracy: {float(sum(answers)) / len(answers)}.",
-                file=f,
-            )
-        with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}.txt"), "w") as f:
-            for answer in answers:
-                print(answer, file=f)
+        if args.steer_vec_sae:
+            output_path = os.path.join(args.output_dir, args.dataset)
+            output_path = os.path.join(output_path, "steer_vec")
+            os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
+            with open(os.path.join(output_path, f"scores_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff}.txt"), "w") as f:
+                print(
+                    f"Num of total question: {len(answers)}, "
+                    f"Correct num: {sum(answers)}, "
+                    f"Accuracy: {float(sum(answers)) / len(answers)}.",
+                    file=f,
+                )
+            with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff}.txt"), "w") as f:
+                for answer in answers:
+                    print(answer, file=f)
+        else:
+            output_path = os.path.join(args.output_dir, args.dataset)
+            os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
+            with open(os.path.join(output_path, f"scores_{name}_{args.cot_flag}.txt"), "w") as f:
+                print(
+                    f"Num of total question: {len(answers)}, "
+                    f"Correct num: {sum(answers)}, "
+                    f"Accuracy: {float(sum(answers)) / len(answers)}.",
+                    file=f,
+                )
+            with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}.txt"), "w") as f:
+                for answer in answers:
+                    print(answer, file=f)
+
     elif args.type == "sae":
+
+
         Top_K = TopK(answers, args.K)
         output_path = os.path.join(args.output_dir, args.dataset)
         if args.cumulative:
@@ -484,6 +579,9 @@ def main():
                 )
         print(f"Cardinality of SAE features: {len(answers)}")
         plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, output_path)
+
+
+
 
 if __name__ == "__main__":
     main()

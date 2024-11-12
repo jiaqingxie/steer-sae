@@ -221,3 +221,5 @@ def plot_SAE_barplot(input_dict, top_n, cot_flag, model, path):
     plt.savefig(filename, bbox_inches='tight')
     plt.close()
     print(f"Plot saved as {filename}")
+
+
