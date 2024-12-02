@@ -8,18 +8,13 @@
 #SBATCH --time=3:00:00
 
 module load eth_proxy
-#export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
+export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
-export TRANSFORMERS_OFFLINE=1
 
 cd /cluster/scratch/jiaxie/
 source sae/bin/activate
 
 cd /cluster/project/sachan/jiaxie/SAE_Math
-
-#python gsm8k/vllm_main.py --model_name_or_path=google/gemma-2-9b-it --cache_dir=/cluster/scratch/jiaxie/models/google/gemma-2-9b-it
-#python gsm8k/vllm_main.py --model_name_or_path=google/gemma-2-9b --cache_dir=/cluster/scratch/jiaxie/models/google/gemma-2-9b
-
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 #Settings
@@ -30,9 +25,10 @@ LAYER_IDX=20
 PLOT_NUM=5
 K=10
 TYPE="inference"
-SAE_FILE="google/gemma-scope-2b-pt-res"
+SAE_FILE="gemma-scope-2b-pt-res-canonical"
 SAE_ID="20-gemmascope-res-16k"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
+N_SHOTS=0
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -45,5 +41,5 @@ python -u train/sae.py \
     --sae_file ${SAE_FILE} \
     --param_file ${PARAM_FILE} \
     --sae_id ${SAE_ID} \
+    --n_shot ${N_SHOTS} \
     --vllm \
-    --cot_flag \

@@ -15,11 +15,15 @@ from huggingface_hub import hf_hub_download
 from models.SAE.JumpReLU import JumpReLUSAE
 import gc
 from prompts.prompts import get_examples
+from transformers import  GenerationConfig
+from sae_lens import SAE
 
 
-
+from functools import partial
+import math
 
 from utils import *
+from parser import *
 import argparse
 import numpy as np
 
@@ -29,13 +33,12 @@ transformers.logging.set_verbosity(40)
 
 ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
-N_SHOT = 8
 ANSWER_TRIGGER = "The answer is"
 ANSWER_TRIGGER_2 = "kasarigan: "
 ANSWER_TRIGGER_3 = "automáticamente se le da la respuesta de"
 
-def extract_answer_from_output(completion, dataset):
-    if dataset == "gsm8k":
+def extract_answer_from_output(completion, dataset, sample):
+    if dataset in ["gsm8k", "gsm8k_train"] :
         match = ANS_RE.search(completion)
         if match:
             match_str = match.group(1).strip()
@@ -44,6 +47,13 @@ def extract_answer_from_output(completion, dataset):
         else:
             return INVALID_ANS
     elif dataset in ["svamp", "mawps", "aqua"]:
+        if dataset == "aqua":
+
+            choice = sample["input"] # List A, B, C, D, E
+            for item in choice:
+                if completion in item:
+                    return item
+
         return completion
     elif dataset == "asdiv":
         match = re.match(r'\d+', completion)
@@ -52,11 +62,15 @@ def extract_answer_from_output(completion, dataset):
             match_str = match_str.replace(",", "")
             return match_str
         else:
-            return INVALID_ANS
+            return completion
+    elif dataset == "math":
+        answer =  extract_answer(completion, dataset)
+        return simplify_latex_expression(answer)
 
 
-def is_correct(model_answer, answer, dataset):
-    gt_answer = extract_answer_from_output(answer, dataset)
+def is_correct(model_answer, answer, dataset, sample):
+
+    gt_answer = extract_answer_from_output(answer, dataset, sample)
     assert gt_answer != INVALID_ANS
 
     if model_answer == INVALID_ANS:
@@ -65,9 +79,9 @@ def is_correct(model_answer, answer, dataset):
     try:
         model_answer_float = float(model_answer)
         gt_answer_float = float(gt_answer)
-        return model_answer_float == gt_answer_float
+        return model_answer_float == gt_answer_float or abs(model_answer_float - gt_answer_float) <= 1e-3
     except (ValueError, TypeError):
-        return model_answer == gt_answer # deal with multiple-choice questions
+        return str(gt_answer) == str(model_answer)
 
 def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
     examples = get_examples(dataset)
@@ -83,6 +97,8 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
 
     # Concatenate demonstration examples ...
     demo_text = ""
+
+
     for i in index_list[:n_shot]:
         if cot_flag:
             demo_text += (
@@ -98,9 +114,9 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
             )
         else:
             demo_text += (
-                "Q: "
+                "Question: "
                 + question[i]
-                + "\nA: "
+                + "\nAnswer: "
                 + ANSWER_TRIGGER
                 + " "
                 + answer[i]
@@ -111,29 +127,35 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
 
 def build_prompt(input_text, n_shot, cot_flag, dataset):
     demo = create_demo_text(n_shot, cot_flag, dataset)
-    if cot_flag:
-        input_text_prompt = demo + "Q: " + input_text + "\n Please reason step by step. " + "A:"
-
+    if dataset in ["aqua"]:
+        input_text_prompt = demo + "Question: Answer Choices: " + input_text + "\n" + "Answer:"
     else:
-        input_text_prompt = demo + "Q: " + input_text + "\n" + "A:"
+        input_text_prompt = demo + "Question: " + input_text + "\n" + "Answer:"
     return input_text_prompt
 
 
-def clean_answer(model_pred, sae=False):
+def clean_answer(model_pred, sae=False, vllm=False, dataset="gsm8k", steer_vec_sae=False):
     if not sae:
-        generated_text = model_pred.outputs[0].text
+        if vllm:
+            generated_text = model_pred.outputs[0].text
+        else:
+            generated_text = model_pred
     else:
         generated_text = model_pred
+
+    preds = None
+
+
+
     generated_text = generated_text.lower()
     if ANSWER_TRIGGER in generated_text:
         preds = generated_text.split(ANSWER_TRIGGER.lower())
-    elif ANSWER_TRIGGER in generated_text:
+    elif ANSWER_TRIGGER_2 in generated_text:
         preds = generated_text.split(ANSWER_TRIGGER_2.lower())
     elif ANSWER_TRIGGER_3 in generated_text:
         preds = generated_text.split(ANSWER_TRIGGER_3.lower())
     else:
         preds = generated_text.split(ANSWER_TRIGGER.lower())
-
 
 
     if preds is not None:
@@ -165,9 +187,6 @@ def clean_answer(model_pred, sae=False):
 
 
 def seed_everything(seed: int):
-    import random
-    import os
-    import torch
 
     random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
@@ -180,22 +199,26 @@ def seed_everything(seed: int):
 
 def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens, n_devices, bfloat16):
     print(f"Loading model from {model_name_or_path} ...")
-    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
     if use_vllm:
         if bfloat16:
-            llm = vllm.LLM(model_name_or_path, download_dir=cache_dir, gpu_memory_utilization=1, max_model_len=4096,
+            llm = vllm.LLM(model_name_or_path, gpu_memory_utilization=1, max_model_len=4096,
                            trust_remote_code=True, dtype=torch.bfloat16)
         else:
-            llm = vllm.LLM(model_name_or_path, download_dir = cache_dir, gpu_memory_utilization = 1, max_model_len=4096, trust_remote_code=True)  # Initialize vLLM
+            llm = vllm.LLM(model_name_or_path, gpu_memory_utilization = 1, max_model_len=4096, trust_remote_code=True)  # Initialize vLLM
     elif use_transformer_lens:
         torch.set_grad_enabled(False)
         #with torch.no_grad():
         if bfloat16:
-            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, cache_dir=cache_dir, center_unembed=False, n_devices = n_devices, torch_dtype=torch.bfloat16)
+            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices, torch_dtype=torch.bfloat16)
         else:
-            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, cache_dir=cache_dir, center_unembed=False, n_devices = n_devices)
+            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices)
     else:
-        llm = AutoModelForCausalLM.from_pretrained(model_name_or_path,device_map="auto",torch_dtype=torch.bfloat16, cache_dir=cache_dir, trust_remote_code=True)
+        if bfloat16:
+            llm = AutoModelForCausalLM.from_pretrained(model_name_or_path,device_map="auto",torch_dtype=torch.bfloat16, trust_remote_code=True)
+        else:
+            llm = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map="auto",
+                                                       trust_remote_code=True)
     return llm, tokenizer
 
 
@@ -253,9 +276,16 @@ def parse_args():
         help="layer to choose from"
     )
     parser.add_argument(
-        "--coeff",
+        "--n_shot",
         type=int,
-        default=400,
+        default=8,
+        help="number of shots"
+    )
+    parser.add_argument(
+        "--coeff",
+        nargs='+',
+        type=int,
+        default=[700, 900],
         help="coefficient for steering vectors"
     )
     parser.add_argument(
@@ -263,6 +293,12 @@ def parse_args():
         type=int,
         default=5,
         help="Top K SAE features"
+    )
+    parser.add_argument(
+        "--NUM_SAE",
+        type=int,
+        default=500,
+        help="Number of samples considered in inferring most important SAE features"
     )
     parser.add_argument(
         "--devices",
@@ -302,9 +338,22 @@ def parse_args():
     )
     parser.add_argument(
         "--sae_idx",
+        nargs='+',
         type=int,
-        default=15153,
-        help="SAE feature index"
+        help='List of integers'
+
+    )
+    parser.add_argument(
+        "--omega",
+        type=float,
+        default=1,
+        help="weight of location diff"
+    )
+    parser.add_argument(
+        "--T",
+        type=float,
+        default=1,
+        help="Current temperature. Higher temperature leads to more decay "
     )
     parser.add_argument(
         "--sae_id",
@@ -333,6 +382,11 @@ def parse_args():
         help="use sae vectors as steering vectors"
     )
     parser.add_argument(
+        "--steer_vec_baseline",
+        action="store_true",
+        help="use act difference vectors as steering vectors"
+    )
+    parser.add_argument(
         "--grid_search",
         action="store_true",
         help="grid searching coefficients for sae"
@@ -343,14 +397,36 @@ def parse_args():
     return args
 
 
-def generate(model, tokenizer, input_text, generate_kwargs):
+def generate(model, tokenizer, input_text, generate_kwargs, vllm):
     # Input text as is, no need for attention mask or input ids in vLLM
-    response = model.generate([input_text], generate_kwargs)
+    if vllm:
+        response = model.generate([input_text], generate_kwargs)
 
-    if len(response) > 1:
-        return response
+        if len(response) > 1:
+            return response
 
-    return response[0]
+        return response[0]
+    else:
+        input_ids = input_text.input_ids.cuda()
+        attention_mask = input_text.attention_mask.cuda()
+
+        output_ids = model.generate(
+            input_ids=input_ids, attention_mask=attention_mask, **generate_kwargs
+        )
+
+        response = []
+        for i in range(output_ids.shape[0]):
+            response.append(
+                tokenizer.decode(
+                    output_ids[i][input_ids.shape[1]:],
+                    skip_special_tokens=True,
+                    ignore_tokenization_space=True,
+                )
+            )
+
+        if len(response) > 1:
+            return response
+        return response[0]
 
 
 def main():
@@ -378,34 +454,37 @@ def main():
 
     model, tokenizer = load(args.model_name_or_path, args.cache_dir, args.vllm, args.transformer_lens, args.devices, args.bfloat16)
 
-    path_to_params = hf_hub_download(
-        repo_id=args.sae_file,
-        filename=args.param_file,
-        force_download=False,
-        cache_dir=args.cache_dir,
-    )
+    if args.type == "sae" or args.steer_vec_sae:
+        if "9b" in args.model_name_or_path:
+            sae, cfg_dict, sparsity = SAE.from_pretrained(
+                release=args.sae_file,  # see other options in sae_lens/pretrained_saes.yaml
+                sae_id=f"layer_{args.layer_idx}/width_16k/canonical",  # won't always be a hook point
+                device="cuda:0"
+            )
+        else:
+            sae, cfg_dict, sparsity = SAE.from_pretrained(
+                release=args.sae_file,  # see other options in sae_lens/pretrained_saes.yaml
+                sae_id=f"layer_{args.layer_idx}/width_16k/canonical",  # won't always be a hook point
+                device="cuda:0"
+            )
 
-    params = np.load(path_to_params)
-    pt_params = {k: torch.from_numpy(v).cuda() for k, v in params.items()}
 
-    sae = JumpReLUSAE(params['W_enc'].shape[0], params['W_enc'].shape[1])
-    sae.load_state_dict(pt_params)
-    sae = sae.to("cuda:0")
 
     cum = []
     cnt = 0
     top_k_values, top_k_indices = 0, 0
+    # np.random.seed(args.seed)
 
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
 
-        input_text = build_prompt(sample["instruction"], N_SHOT, args.cot_flag, args.dataset)
+        input_text = build_prompt(sample["instruction"], args.n_shot, args.cot_flag, args.dataset)
         input_text = input_text.strip(" ")
 
         if args.vllm:
             sampling_params = SamplingParams(
-                max_tokens=2048,
-                temperature=0,
+                max_tokens=256,
+                temperature=0.05,
                 top_p=1,
                 stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ"],
                 stop_token_ids=(
@@ -416,66 +495,168 @@ def main():
 
             )
         else:
-            sampling_params = dict(max_new_tokens=256, top_p=1, temperature=0)
+            sampling_params = dict( top_p=1.0, temperature=0.05, freq_penalty=1)
 
         if args.type == "inference":
             if args.steer_vec_sae:
-                steering_vector = sae.W_dec[args.sae_idx]
-                if args.grid_search:
-                    coeff = args.coeff
+                steering_vector = sae.W_dec[args.sae_idx[0]]
+                if args.devices == 2:
+                    steering_vector = steering_vector.to("cuda:1")
                 sampling_kwargs = sampling_params
                 steering_on = True
-                eos_token_id = tokenizer.encode("\n\n", add_special_tokens=False)
+                eos_token_id = tokenizer.encode("Question", add_special_tokens=False)[0]
+                eos_token_id_2 = tokenizer.encode("<eos>", add_special_tokens=False)[0]
 
-                def steering_hook(resid_pre, hook):
+                def steering_hook(resid_pre, hook, coeff1_dynamic):
+                    # print(resid_pre.shape)
                     if resid_pre.shape[1] == 1:
                         return
 
                     if steering_on:
-                        # using our steering vector and applying the coefficient
-                        resid_pre[:, :, :] += coeff * steering_vector
+                        tilde_pre = resid_pre + args.coeff[0] * math.pow(1/ (args.omega * coeff1_dynamic()), args.T) * steering_vector
+                        resid_pre[:, :, :] = tilde_pre * torch.norm(resid_pre[:, :, :], p=2) / torch.norm(tilde_pre,
+                                                                                                          p=2)
+
+                def dynamic_coeff1():
+                    dynamic_coeff1.counter += 1
+                    return dynamic_coeff1.counter
+
+                dynamic_coeff1.counter = 0
+                dynamic_hook = partial(steering_hook, coeff1_dynamic=dynamic_coeff1)
 
                 def hooked_generate(prompt_batch, fwd_hooks=[], seed=None, **kwargs):
                     if seed is not None:
                         torch.manual_seed(seed)
 
-                    with model.hooks(fwd_hooks=fwd_hooks):
-                        tokenized = model.to_tokens(prompt_batch)
-                        result = model.generate(
-                            stop_at_eos=True,
-                            input=tokenized,
-                            do_sample=True,
-                            eos_token_id=eos_token_id,
-                            **kwargs
-                        )
-                    return result
+                    tokenized = model.to_tokens(prompt_batch)
+                    generated_tokens = tokenized
+
+                    for _ in range(kwargs.get('max_new_tokens', 256)):
+                        with model.hooks(fwd_hooks=fwd_hooks):
+                            result = model.generate(
+                                stop_at_eos=True,
+                                input=generated_tokens,
+                                max_new_tokens=1,
+                                do_sample=True,
+                                eos_token_id=[eos_token_id, eos_token_id_2],
+                                **kwargs
+                            )
+
+                        new_token = result[:, -1:]
+                        generated_tokens = torch.cat([generated_tokens, new_token], dim=1)
+
+                        if new_token[0].item() in [9413, 235368, 187]:
+                            break
+
+                        if "<eos>" in model.to_string(new_token):
+                            break
+
+                    return generated_tokens
+
 
                 def run_generate(input_text):
                     model.reset_hooks()
-                    editing_hooks = [(f"blocks.{args.layer_idx}.hook_resid_post", steering_hook)]
+                    editing_hooks = [(f"blocks.{args.layer_idx}.hook_resid_post", dynamic_hook)]
                     res = hooked_generate(
-                        [input_text], editing_hooks, seed=None, **sampling_kwargs
+                        [input_text], editing_hooks, seed=args.seed, **sampling_kwargs
                     )
 
                     # Print results, removing the ugly beginning of sequence token
                     token_len = model.to_tokens(input_text).size(1)
                     answer = model.to_string(res[:, token_len:])
                     answer = "".join(answer)
+
                     return answer
 
-                model_answer = clean_answer(run_generate(input_text), True)
-            else:
-                model_completion = generate(model, tokenizer, input_text, sampling_params)
-                model_answer = clean_answer(model_completion)
+                model_completion = run_generate(input_text)
+                gc.collect()
+                torch.cuda.empty_cache()
+                if args.dataset == "aqua":
+                    model_answer = choice_answer_clean(model_completion, args.vllm)
+                elif args.dataset == "math":
+                    model_answer = extract_latex_or_number(model_completion,  args.vllm)
+                    model_answer = simplify_latex_expression(model_answer)
+                else:
+                    model_answer = clean_answer(model_completion, True, args.vllm, args.dataset, args.steer_vec_sae)
 
-            is_cor = is_correct(model_answer, sample["output"], args.dataset)
+            elif args.steer_vec_baseline:
+
+                input_text_COT = build_prompt(sample["instruction"], args.n_shot, True, args.dataset)
+                input_text_COT = input_text_COT.strip(" ")
+
+
+                sampling_kwargs = sampling_params
+                eos_token_id = tokenizer.encode("Q", add_special_tokens=False)
+
+                cache_name = f"blocks.{args.layer_idx}.hook_resid_post"
+                _, cache = model.run_with_cache(input_text,
+                                                names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post')
+                act_original = cache[cache_name]
+                _, cache = model.run_with_cache(input_text_COT,
+                                                names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post')
+                act_cot = cache[cache_name]
+
+                steering_vec = act_cot[:, -1, :] - act_original[:, -1, :]
+
+                # define the activation steering funtion
+                def act_add(steering_vec):
+                    def hook(activation, hook):
+                        return activation + args.coeff[0] * steering_vec
+
+                    return hook
+
+                model.add_hook(name=cache_name, hook=act_add(steering_vec))
+                result = model.generate(
+                    stop_at_eos=True,
+                    input=input_text,
+                    do_sample=True,
+                    eos_token_id=[eos_token_id],
+                    **sampling_kwargs
+                )
+                model.reset_hooks()
+                token_len = model.to_tokens(input_text).size(1)
+                answer = model.to_string(result[:, token_len:])
+                model_completion = "".join(answer)
+                gc.collect()
+                torch.cuda.empty_cache()
+                if args.dataset == "aqua":
+                    model_answer = choice_answer_clean(model_completion, args.vllm)
+                elif args.dataset == "math":
+                    model_answer = extract_latex_or_number(model_completion, args.vllm)
+                    model_answer = simplify_latex_expression(model_answer)
+                else:
+                    model_answer = clean_answer(model_completion, True, args.vllm, args.dataset, args.steer_vec_sae)
+
+
+
+            else:
+                if not args.vllm:
+                    input_text = tokenizer(
+                        input_text,
+                        padding=False,
+                        add_special_tokens=True,
+                        return_tensors="pt",
+                    ).to("cuda:0")
+                    sampling_kwargs = GenerationConfig(**sampling_params)
+
+
+                model_completion = generate(model, tokenizer, input_text, sampling_params, args.vllm)
+                if args.dataset == "aqua":
+                    model_answer = choice_answer_clean(model_completion, args.vllm)
+                elif args.dataset == "math":
+                    model_answer = extract_latex_or_number(model_completion,  args.vllm)
+                    model_answer = simplify_latex_expression(model_answer)
+                else:
+                    model_answer = clean_answer(model_completion, False, args.vllm, args.dataset, args.steer_vec_sae)
+            is_cor = is_correct(model_answer, sample["output"], args.dataset, sample)
             answers.append(is_cor)
             if args.debug:
                 print(f"Full input_text:\n{input_text}\n\n")
             print(
                 f'Question: {sample["instruction"]}\n\n'
-                f'Answers: {extract_answer_from_output(sample["output"], args.dataset)}\n\n'
+                f'Answers: {extract_answer_from_output(sample["output"], args.dataset, sample)}\n\n'
                 f"Model Answers: {model_answer}\n\n"
+                f"Model Completion: {model_completion}\n\n"
                 f"Is correct: {is_cor}\n\n"
             )
 
@@ -485,7 +666,9 @@ def main():
                 f"Accuracy: {float(sum(answers))/len(answers)}."
             )
         elif args.type == "sae":
-
+            if cnt == args.NUM_SAE:
+                break
+            # print(input_text)
             with torch.no_grad():
                 inputs = tokenizer.encode(
                     input_text, return_tensors="pt", add_special_tokens=True
@@ -508,6 +691,8 @@ def main():
                         cum += sae_acts[-1]
                     else:
                         cum = sae_acts[-1]
+                    top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
+                    print(top_k_indices)
                 else:
                     top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
                     for ind in top_k_indices:
@@ -523,9 +708,9 @@ def main():
         cnt += 1
     if args.cumulative:
         answers = {}
-        top_k_values, top_k_indices = torch.topk(cum, args.K)
+        top_k_values, top_k_indices = torch.topk(cum, cum.size(0))
         for ind, val in zip(top_k_indices, top_k_values):
-            answers[ind.item()] = val.item()
+            answers[ind.item()] = val.item() / args.NUM_SAE
 
     os.makedirs(args.output_dir, exist_ok=True)
     name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
@@ -535,14 +720,14 @@ def main():
             output_path = os.path.join(args.output_dir, args.dataset)
             output_path = os.path.join(output_path, "steer_vec")
             os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
-            with open(os.path.join(output_path, f"scores_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff}.txt"), "w") as f:
+            with open(os.path.join(output_path, f"scores_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff[0]}.txt"), "w") as f:
                 print(
                     f"Num of total question: {len(answers)}, "
                     f"Correct num: {sum(answers)}, "
                     f"Accuracy: {float(sum(answers)) / len(answers)}.",
                     file=f,
                 )
-            with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff}.txt"), "w") as f:
+            with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff[0]}.txt"), "w") as f:
                 for answer in answers:
                     print(answer, file=f)
         else:
@@ -569,7 +754,7 @@ def main():
         else:
             output_path= os.path.join(output_path, "non-cumulative")
         os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
-        with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.K}.txt"), "w") as f:
+        with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.K}_{args.layer_idx}.txt"), "w") as f:
             print(f"Top {args.K} SAE features")
             for index, value in Top_K:
                 print(
@@ -578,7 +763,7 @@ def main():
                     file=f,
                 )
         print(f"Cardinality of SAE features: {len(answers)}")
-        plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, output_path)
+        plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, output_path, args.cumulative)
 
 
 

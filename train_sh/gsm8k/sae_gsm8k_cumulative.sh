@@ -8,10 +8,10 @@
 #SBATCH --time=3:00:00
 
 module load eth_proxy
-#export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
+export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
 
-export TRANSFORMERS_OFFLINE=1
+#export TRANSFORMERS_OFFLINE=1
 cd /cluster/scratch/jiaxie/
 source sae/bin/activate
 
@@ -22,15 +22,15 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 MODEL_NAME_OR_PATH="google/gemma-2-2b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-LAYER_IDX=20
+LAYER_IDX=21
 PLOT_NUM=5
 K=10
 TYPE="sae"
-SAE_FILE="google/gemma-scope-2b-pt-res"
-SAE_ID="20-gemmascope-res-16k"
-PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
+SAE_FILE="gemma-scope-2b-pt-res-canonical"
+SAE_ID="21-gemmascope-res-16k"
 TRANSFORMER_LENS=True
 DATASET="gsm8k_train"
+SEED=0
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -41,8 +41,8 @@ python -u train/sae.py \
     --K ${K} \
     --type ${TYPE} \
     --sae_file ${SAE_FILE} \
-    --param_file ${PARAM_FILE} \
     --transformer_lens \
     --sae_id ${SAE_ID} \
-    --cumulative \
-
+    --cot_flag \
+    --seed ${SEED} \
+    --dataset ${DATASET} \

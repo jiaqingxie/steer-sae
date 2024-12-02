@@ -13,7 +13,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-
+import sympy as sp
 
 test_url = {
     "gsm8k": "https://raw.githubusercontent.com/openai/grade-school-math/"
@@ -25,15 +25,22 @@ test_url = {
     "aqua":  "https://raw.githubusercontent.com/QwenLM/Qwen2.5-Math/"
              "e128aa06871c7a0eeedc2ab21b69459bcb24c4fb/evaluation/data/aqua/test.jsonl",
     "asdiv":  "https://raw.githubusercontent.com/QwenLM/Qwen2.5-Math/"
-             "e128aa06871c7a0eeedc2ab21b69459bcb24c4fb/evaluation/data/asdiv/test.jsonl"
+             "e128aa06871c7a0eeedc2ab21b69459bcb24c4fb/evaluation/data/asdiv/test.jsonl",
+    "gsm8k_train": "https://raw.githubusercontent.com/QwenLM/Qwen2.5-Math/"
+             "e128aa06871c7a0eeedc2ab21b69459bcb24c4fb/evaluation/data/gsm8k/train.jsonl",
+    "math": "https://raw.githubusercontent.com/QwenLM/Qwen2.5-Math/"
+             "e128aa06871c7a0eeedc2ab21b69459bcb24c4fb/evaluation/data/math/test.jsonl",
+
 }
 
 pair = {
     "gsm8k": ["question", "answer"],
+    "gsm8k_train": ["question", "answer"],
     "mawps": ["input", "target"],
     "svamp": ["Question", "Body", "Answer"],
     "aqua": ["question", "options", "correct"],
-    "asdiv": ["question", "body", "answer"]
+    "asdiv": ["question", "body", "answer"],
+    "math": ["problem", "solution"]
 
 }
 
@@ -71,7 +78,7 @@ def download_url(url: str, folder="folder"):
 def load_jsonl(
     file_path,
     instruction="instruction",
-    input="input",
+    input="inputs",
     output="output",
     category="category",
     is_gzip=False,
@@ -91,7 +98,10 @@ def load_jsonl(
 
             # Prepend input to instruction if input is not empty
             if input_value:
-                instruction_value = input_value + " " + instruction_value
+                if "aqua" in file_path:
+                    instruction_value = input_value + ". " + instruction_value
+                else:
+                    instruction_value = input_value + " " + instruction_value
 
             new_item = dict(
                 instruction=instruction_value,
@@ -127,7 +137,7 @@ def extract_explanation(idx, model, sae_id):
     result = extracted_content[start_pos:end_pos - 3]
     return result
 
-def plot_SAE_barplot(input_dict, top_n, cot_flag, model, path):
+def plot_SAE_barplot(input_dict, top_n, cot_flag, model, path, cumulative):
     plt.rcParams['font.family'] = 'Arial'
 
     df = pd.DataFrame(list(input_dict.items()), columns=['Feature', 'Count'])
@@ -163,7 +173,10 @@ def plot_SAE_barplot(input_dict, top_n, cot_flag, model, path):
     plt.xticks(rotation=90, ha='center', fontsize=6)
 
     ax.set_xlabel('Sorted SAE Feature Index', fontsize=14)
-    ax.set_ylabel('SAE Feature Frequency', fontsize=14)
+    if cumulative:
+        ax.set_ylabel('Average Activation Value', fontsize=14)
+    else:
+        ax.set_ylabel('Top-K SAE Feature Frequency', fontsize=14)
 
     ax.set_title('SAE Feature Distribution', fontsize=16, weight='bold', y=1.05)
 
@@ -223,3 +236,152 @@ def plot_SAE_barplot(input_dict, top_n, cot_flag, model, path):
     print(f"Plot saved as {filename}")
 
 
+####### adapted from Qwen 2.5
+direct_answer_trigger_for_fewshot = ("choice is", "answer is")
+def choice_answer_clean(model_pred, vllm):
+    if vllm:
+        pred = model_pred.outputs[0].text
+    else:
+        pred = model_pred
+    pred = pred.strip("\n")
+
+    # Determine if this is ICL, if so, use \n\n to split the first chunk.
+    ICL = False
+    for trigger in direct_answer_trigger_for_fewshot:
+        if pred.count(trigger) > 1:
+            ICL = True
+    if ICL:
+        pred = pred.split("\n\n")[0]
+
+    # Split the trigger to find the answer.
+    preds = re.split("|".join(direct_answer_trigger_for_fewshot), pred)
+    if len(preds) > 1:
+        answer_flag = True
+        pred = preds[-1]
+    else:
+        answer_flag = False
+
+    pred = pred.strip("\n").rstrip(".").rstrip("/").strip(" ").lstrip(":")
+
+    # Clean the answer based on the dataset
+    tmp = re.findall(r"\b(A|B|C|D|E)\b", pred.upper())
+    if tmp:
+        pred = tmp
+    else:
+        pred = [pred.strip().strip(".")]
+
+    if len(pred) == 0:
+        pred = ""
+    else:
+        if answer_flag:
+            # choose the first element in list ...
+            pred = pred[0]
+        else:
+            # choose the last e
+            pred = pred[-1]
+
+    # Remove the period at the end, again!
+    pred = pred.rstrip(".").rstrip("/")
+
+    return pred
+
+
+
+
+def extract_latex_or_number(model_pred, vllm):
+    """
+    Extract the desired output based on the updated rules:
+    1. If '=' is present:
+       - Return everything after the last '=' until the next $ or $$.
+       - If no $ or $$ after '=', return everything after the last '='.
+    2. If no '=':
+       - For the last $...$ or $$...$$:
+         - If a number exists inside, return that number.
+         - Otherwise, return the content inside the last $...$ or $$...$$.
+    3. If no '=' or $/$, return the last number in the string.
+    This version ensures no trailing $ or $$ in the output and corrects for cases without '='.
+    """
+    if vllm:
+        input_str = model_pred.outputs[0].text
+    else:
+        input_str = model_pred
+    input_str = input_str.strip("\n")
+    # Regex patterns for $$...$$ and $...$
+    double_dollar_pattern = r'\$\$(.*?)\$\$'
+    single_dollar_pattern = r'\$(.*?)\$'
+
+    # Find all $$...$$ and $...$ matches
+    double_dollar_matches = re.findall(double_dollar_pattern, input_str)
+    single_dollar_matches = re.findall(single_dollar_pattern, input_str)
+
+    # Get the last $$...$$ and $...$ if they exist
+    last_double_dollar = double_dollar_matches[-1] if double_dollar_matches else None
+    last_single_dollar = single_dollar_matches[-1] if single_dollar_matches else None
+
+    # Determine the positions of the last $$ $$ and $ $
+    last_double_dollar_pos = input_str.rfind(f"$${last_double_dollar}$$") if last_double_dollar else -1
+    last_single_dollar_pos = input_str.rfind(f"${last_single_dollar}$") if last_single_dollar else -1
+
+    # Determine the most relevant LaTeX block (whichever comes last)
+    if last_double_dollar_pos > last_single_dollar_pos:
+        last_block = last_double_dollar
+    else:
+        last_block = last_single_dollar
+
+    # Find the position of the last '='
+    if "=" in input_str:
+        equal_pos = input_str.rfind("=")
+        # Extract content after the last '=' until the next $ or $$
+        after_equal = input_str[equal_pos + 1:].split("$")[0].split("$$")[0].strip()
+        return after_equal
+
+    # If no '=' is present
+    if last_block:
+        return last_block.strip()  # Return the entire content of the last $...$ or $$...$$
+
+    # If no $/$ or '=' is present, return the last number
+    numbers = re.findall(r'\b\d+\.?\d*\b', input_str)
+    return numbers[-1] if numbers else None
+
+def simplify_latex_expression(expression):
+    """
+    Simplify a LaTeX mathematical expression according to the rules:
+    1. If there is \sqrt{}, calculate the square root if it contains only numbers or \pi.
+    2. If there is \frac{}{}, calculate the fraction if it contains only numbers or \pi.
+    3. Replace \pi with 3.14 for numerical evaluation.
+    4. Handle expressions with numeric coefficients (e.g., 10\sqrt{} or 10\frac{}{}), treating missing * as multiplication.
+    5. Skip simplification if variables (letters) are present inside \sqrt{} or \frac{}{}.
+    """
+    # Replace \pi with 3.14 in the expression
+    if not isinstance(expression, (int, str)):
+        return "Invalid"
+    expression = expression.replace(r"\pi", "3.14")
+
+    # Ensure proper multiplication when numeric coefficient is followed by \ (e.g., 3\sqrt{} → 3*\sqrt{})
+    expression = re.sub(r"(\d)(\\)", r"\1*\2", expression)
+
+    # Match and simplify \sqrt{} if it contains only numbers or \pi
+    sqrt_matches = re.findall(r"\\sqrt\{([^\}]+)\}", expression)
+    for match in sqrt_matches:
+        try:
+            value = sp.sqrt(eval(match, {"__builtins__": None}, {"pi": 3.14}))
+            expression = expression.replace(rf"\sqrt{{{match}}}", str(float(value)))
+        except Exception:
+            continue  # Skip if the content is non-numeric or contains variables
+
+    # Match and simplify \frac{}{} if both parts are numeric or contain \pi
+    frac_matches = re.findall(r"\\frac\{([^\}]+)\}\{([^\}]+)\}", expression)
+    for numerator, denominator in frac_matches:
+        try:
+            value = sp.Rational(eval(numerator, {"__builtins__": None}, {"pi": 3.14}),
+                                eval(denominator, {"__builtins__": None}, {"pi": 3.14}))
+            expression = expression.replace(rf"\frac{{{numerator}}}{{{denominator}}}", str(float(value)))
+        except Exception:
+            continue  # Skip if the content is non-numeric or contains variables
+
+    # Evaluate the resulting mathematical expression with numeric coefficients
+    try:
+        evaluated_expression = eval(expression, {"__builtins__": None}, {"pi": 3.14})
+        return str(evaluated_expression)
+    except Exception:
+        return expression

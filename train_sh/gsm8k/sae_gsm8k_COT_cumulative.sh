@@ -30,6 +30,7 @@ TYPE="sae"
 SAE_FILE="google/gemma-scope-2b-pt-res"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
 TRANSFORMER_LENS=True
+DATASET="gsm8k_train"
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \

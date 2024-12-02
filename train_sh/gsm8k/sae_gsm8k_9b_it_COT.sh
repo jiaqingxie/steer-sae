@@ -8,7 +8,7 @@
 #SBATCH --time=3:00:00
 
 module load eth_proxy
-#export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
+export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
 
 
@@ -28,10 +28,11 @@ PLOT_NUM=5
 N_DEVICES=2
 K=10
 TYPE="sae"
-SAE_FILE="google/gemma-scope-9b-it-res"
+SAE_FILE="gemma-scope-9b-it-res-canonical"
 SAE_ID="31-gemmascope-res-16k"
 PARAM_FILE="layer_31/width_16k/average_l0_76/params.npz"
 TRANSFORMER_LENS=True
+DATASET="gsm8k_train"
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -48,3 +49,5 @@ python -u train/sae.py \
     --sae_id ${SAE_ID} \
     --devices ${N_DEVICES} \
     --bfloat16 \
+    --cumulative \
+    --dataset ${DATASET} \
