@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_svamp_0shot_C200_T2_omega1.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_svamp_0shot_C200_T2_omega1.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_mawps_0shot_C15_T2_omega1_mean_act_vec.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_mawps_0shot_C15_T2_omega1_mean_act_vec.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
-#SBATCH --time=5:00:00
+#SBATCH --time=10:00:00
 
 module load eth_proxy
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
@@ -19,7 +19,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-COEFF=(200 900)
+COEFF=(15 900)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 K=10
 LAYER_IDX=20
@@ -32,11 +32,13 @@ SAE_IDX=(15153)
 TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
-DATASET="svamp"
 T=2
 OMEGA=1
+STEERING_TYPE="mean_act_diff"
+steer_vec_base_directory="/cluster/project/sachan/jiaxie/SAE_Math/mean_vec"
+DATASET="mawps"
 
-python train/sae.py \
+python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
     --data_root ${DATA_ROOT} \
     --cache_dir ${CACHE_DIR} \
@@ -52,7 +54,9 @@ python train/sae.py \
     --steer_vec_sae \
     --n_shot ${N_SHOT}\
     --sae_idx ${SAE_IDX[@]} \
-    --dataset  ${DATASET} \
     --coeff ${COEFF[@]} \
     --T ${T} \
     --omega ${OMEGA} \
+    --steering_type ${STEERING_TYPE} \
+    --steer_vec_base_directory ${steer_vec_base_directory} \
+    --dataset ${DATASET} \

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/%j.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/%j.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_mawps_inference.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_mawps_inference.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1

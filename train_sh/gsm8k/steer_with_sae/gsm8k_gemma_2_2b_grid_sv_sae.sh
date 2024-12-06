@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_gsm8k_0shot_C600_T1_omega0.75.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_gsm8k_0shot_C600_T1_omega0.75.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_gsm8k_0shot_C600_T3_omega0.5.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_gsm8k_0shot_C600_T3_omega0.5.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -32,8 +32,8 @@ SAE_IDX=(15153)
 TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
-T=1
-OMEGA=0.75
+T=3
+OMEGA=0.5
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \

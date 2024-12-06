@@ -125,12 +125,16 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
     return demo_text
 
 
-def build_prompt(input_text, n_shot, cot_flag, dataset):
+def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction):
     demo = create_demo_text(n_shot, cot_flag, dataset)
     if dataset in ["aqua"]:
         input_text_prompt = demo + "Question: Answer Choices: " + input_text + "\n" + "Answer:"
     else:
-        input_text_prompt = demo + "Question: " + input_text + "\n" + "Answer:"
+        if add_instruction:
+            input_text_prompt = demo + "Question: " + input_text + " Please reason step by step\n" + "Answer:"
+        else:
+            input_text_prompt = demo + "Question: " + input_text + "\n" + "Answer:"
+        
     return input_text_prompt
 
 
@@ -210,7 +214,7 @@ def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens, n_device
         torch.set_grad_enabled(False)
         #with torch.no_grad():
         if bfloat16:
-            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices, torch_dtype=torch.bfloat16)
+            llm = transformer_lens.HookedTransformer.from_pretrained_no_processing(model_name_or_path, n_devices = n_devices, torch_dtype=torch.bfloat16)
         else:
             llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices)
     else:
@@ -260,6 +264,13 @@ def parse_args():
         help="local directory where the model will be saved."
     )
     parser.add_argument(
+        "--steering_type",
+        type=str,
+        default="sae",
+        help="sae / mean_act_diff"
+    )
+
+    parser.add_argument(
         "--cot_flag",
         action="store_true",
         help="use chain of thought or not"
@@ -306,8 +317,16 @@ def parse_args():
         default=1,
         help="number of GPUs to use"
     )
+
     parser.add_argument(
         "--type",
+        type=str,
+        default="./vec",
+        help="inference/sae"
+    )
+
+    parser.add_argument(
+        "--steer_vec_base_directory",
         type=str,
         default="inference",
         help="inference/sae"
@@ -367,6 +386,16 @@ def parse_args():
         help="use vllm or not"
     )
     parser.add_argument(
+        "--add_instruction",
+        action="store_true",
+        help="add Please reason step by step in the input or not"
+    )
+    parser.add_argument(
+        "--calculate_mean_diff",
+        action="store_true",
+        help="if calculate mean diff, then not infer, if not and steer vec baseline is true, then infer"
+    )
+    parser.add_argument(
         "--transformer_lens",
         action="store_true",
         help="use Transformer Lens or not"
@@ -379,7 +408,7 @@ def parse_args():
     parser.add_argument(
         "--steer_vec_sae",
         action="store_true",
-        help="use sae vectors as steering vectors"
+        help="use sae (or mean_act_diff) vectors as steering vectors"
     )
     parser.add_argument(
         "--steer_vec_baseline",
@@ -432,7 +461,6 @@ def generate(model, tokenizer, input_text, generate_kwargs, vllm):
 def main():
     args = parse_args()
 
-
     seed_everything(args.seed)
 
     test_filepath = os.path.join(args.data_root, args.dataset + "_test.jsonl")
@@ -475,10 +503,18 @@ def main():
     top_k_values, top_k_indices = 0, 0
     # np.random.seed(args.seed)
 
+    steering_vec = None
+    if args.steer_vec_baseline:
+        name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
+        file_name = f"{name}_mean_diff.pt"
+        steering_vec = load_tensor(args.steer_vec_base_directory, file_name)
+
+
+
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
 
-        input_text = build_prompt(sample["instruction"], args.n_shot, args.cot_flag, args.dataset)
+        input_text = build_prompt(sample["instruction"], args.n_shot, args.cot_flag, args.dataset, args.add_instruction)
         input_text = input_text.strip(" ")
 
         if args.vllm:
@@ -499,7 +535,14 @@ def main():
 
         if args.type == "inference":
             if args.steer_vec_sae:
-                steering_vector = sae.W_dec[args.sae_idx[0]]
+                if args.steering_type == "sae":
+                    steering_vector = sae.W_dec[args.sae_idx[0]]
+                elif args.steering_type == "mean_act_diff":
+                    name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
+                    file_name = f"{name}_mean_diff.pt"
+                    file_path = os.path.join(args.steer_vec_base_directory, file_name)
+                    steering_vector = torch.load(file_path)
+
                 if args.devices == 2:
                     steering_vector = steering_vector.to("cuda:1")
                 sampling_kwargs = sampling_params
@@ -567,8 +610,8 @@ def main():
                     answer = "".join(answer)
 
                     return answer
-
-                model_completion = run_generate(input_text)
+                with torch.no_grad():
+                    model_completion = run_generate(input_text)
                 gc.collect()
                 torch.cuda.empty_cache()
                 if args.dataset == "aqua":
@@ -580,8 +623,10 @@ def main():
                     model_answer = clean_answer(model_completion, True, args.vllm, args.dataset, args.steer_vec_sae)
 
             elif args.steer_vec_baseline:
+                if cnt == args.NUM_SAE:
+                    break
 
-                input_text_COT = build_prompt(sample["instruction"], args.n_shot, True, args.dataset)
+                input_text_COT = build_prompt(sample["instruction"], args.n_shot, True, args.dataset, args.add_instruction)
                 input_text_COT = input_text_COT.strip(" ")
 
 
@@ -596,39 +641,15 @@ def main():
                                                 names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post')
                 act_cot = cache[cache_name]
 
-                steering_vec = act_cot[:, -1, :] - act_original[:, -1, :]
 
-                # define the activation steering funtion
-                def act_add(steering_vec):
-                    def hook(activation, hook):
-                        return activation + args.coeff[0] * steering_vec
+                if args.calculate_mean_diff:
+                    if cnt:
+                        steering_vec += act_cot[:, -1, :] - act_original[:, -1, :]
+                    else:
+                        steering_vec = act_cot[:, -1, :] - act_original[:, -1, :]
 
-                    return hook
-
-                model.add_hook(name=cache_name, hook=act_add(steering_vec))
-                result = model.generate(
-                    stop_at_eos=True,
-                    input=input_text,
-                    do_sample=True,
-                    eos_token_id=[eos_token_id],
-                    **sampling_kwargs
-                )
-                model.reset_hooks()
-                token_len = model.to_tokens(input_text).size(1)
-                answer = model.to_string(result[:, token_len:])
-                model_completion = "".join(answer)
-                gc.collect()
-                torch.cuda.empty_cache()
-                if args.dataset == "aqua":
-                    model_answer = choice_answer_clean(model_completion, args.vllm)
-                elif args.dataset == "math":
-                    model_answer = extract_latex_or_number(model_completion, args.vllm)
-                    model_answer = simplify_latex_expression(model_answer)
                 else:
-                    model_answer = clean_answer(model_completion, True, args.vllm, args.dataset, args.steer_vec_sae)
-
-
-
+                    continue
             else:
                 if not args.vllm:
                     input_text = tokenizer(
@@ -648,23 +669,25 @@ def main():
                     model_answer = simplify_latex_expression(model_answer)
                 else:
                     model_answer = clean_answer(model_completion, False, args.vllm, args.dataset, args.steer_vec_sae)
-            is_cor = is_correct(model_answer, sample["output"], args.dataset, sample)
-            answers.append(is_cor)
-            if args.debug:
-                print(f"Full input_text:\n{input_text}\n\n")
-            print(
-                f'Question: {sample["instruction"]}\n\n'
-                f'Answers: {extract_answer_from_output(sample["output"], args.dataset, sample)}\n\n'
-                f"Model Answers: {model_answer}\n\n"
-                f"Model Completion: {model_completion}\n\n"
-                f"Is correct: {is_cor}\n\n"
-            )
 
-            print(
-                f"Num of total question: {len(answers)}, "
-                f"Correct num: {sum(answers)}, "
-                f"Accuracy: {float(sum(answers))/len(answers)}."
-            )
+            if not args.calculate_mean_diff:
+                is_cor = is_correct(model_answer, sample["output"], args.dataset, sample)
+                answers.append(is_cor)
+                if args.debug:
+                    print(f"Full input_text:\n{input_text}\n\n")
+                print(
+                    f'Question: {sample["instruction"]}\n\n'
+                    f'Answers: {extract_answer_from_output(sample["output"], args.dataset, sample)}\n\n'
+                    f"Model Answers: {model_answer}\n\n"
+                    f"Model Completion: {model_completion}\n\n"
+                    f"Is correct: {is_cor}\n\n"
+                )
+
+                print(
+                    f"Num of total question: {len(answers)}, "
+                    f"Correct num: {sum(answers)}, "
+                    f"Accuracy: {float(sum(answers))/len(answers)}."
+                )
         elif args.type == "sae":
             if cnt == args.NUM_SAE:
                 break
@@ -706,6 +729,17 @@ def main():
                 torch.cuda.empty_cache()
 
         cnt += 1
+
+    if args.steer_vec_baseline and args.calculate_mean_diff:
+        steering_vec = steering_vec.squeeze()
+        steering_vec /= cnt
+        name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
+        file_name = f"{name}_mean_diff.pt"
+        file_path = os.path.join(args.steer_vec_base_directory, file_name)
+        if not os.path.exists(args.steer_vec_base_directory):
+            os.makedirs(args.steer_vec_base_directory)
+        torch.save(steering_vec, file_path)
+
     if args.cumulative:
         answers = {}
         top_k_values, top_k_indices = torch.topk(cum, cum.size(0))
@@ -730,6 +764,25 @@ def main():
             with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff[0]}.txt"), "w") as f:
                 for answer in answers:
                     print(answer, file=f)
+        elif args.steer_vec_baseline:
+            if not args.calculate_mean_diff:
+                output_path = os.path.join(args.output_dir, args.dataset)
+                output_path = os.path.join(output_path, "steer_vec")
+                os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
+                with open(
+                        os.path.join(output_path, f"scores_{name}_{args.cot_flag}_mean_diff_steering_{args.coeff[0]}.txt"),
+                        "w") as f:
+                    print(
+                        f"Num of total question: {len(answers)}, "
+                        f"Correct num: {sum(answers)}, "
+                        f"Accuracy: {float(sum(answers)) / len(answers)}.",
+                        file=f,
+                    )
+                with open(
+                        os.path.join(output_path, f"results_{name}_{args.cot_flag}_mean_diff_steering_{args.coeff[0]}.txt"),
+                        "w") as f:
+                    for answer in answers:
+                        print(answer, file=f)
         else:
             output_path = os.path.join(args.output_dir, args.dataset)
             os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists

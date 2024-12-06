@@ -1,0 +1,10 @@
+SAE Index: 1126, Cardinality: 500, Description:  numerical data and references in structured formats
+SAE Index: 7007, Cardinality: 500, Description: terms related to automotive diagnostics and their connection methods
+SAE Index: 6782, Cardinality: 463, Description: technical terms and processes related to scientific algorithms and methodologies
+SAE Index: 12946, Cardinality: 461, Description: phrases indicating reasons or justifications in legal or analytical contexts
+SAE Index: 10817, Cardinality: 438, Description: technical terms and concepts related to data processing and analysis
+SAE Index: 1744, Cardinality: 418, Description:  mathematical terms and expressions
+SAE Index: 548, Cardinality: 303, Description:  mathematical expressions and symbols
+SAE Index: 2797, Cardinality: 213, Description: questions and responses related to personal experiences and creative processes
+SAE Index: 9005, Cardinality: 205, Description: terms and phrases related to healthcare interventions and studies
+SAE Index: 8549, Cardinality: 184, Description:  mathematical expressions or symbols used in proofs and formal definitions

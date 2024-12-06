@@ -1,42 +1,37 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_svamp_0shot_C200_T2_omega1.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_svamp_0shot_C200_T2_omega1.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/gsm8k-gemma2b-inference_add_instruction.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/gsm8k-gemma2b-inference_add_instruction.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
-#SBATCH --time=5:00:00
+#SBATCH --time=3:00:00
 
 module load eth_proxy
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
-
 
 cd /cluster/scratch/jiaxie/
 source sae/bin/activate
 
 cd /cluster/project/sachan/jiaxie/SAE_Math
 
-#Settings alphabetically
-CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-COEFF=(200 900)
-DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
-K=10
-LAYER_IDX=20
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+#Settings
 MODEL_NAME_OR_PATH="google/gemma-2-2b"
-PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
+DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
+CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
+LAYER_IDX=20
 PLOT_NUM=5
+K=10
+TYPE="inference"
 SAE_FILE="gemma-scope-2b-pt-res-canonical"
 SAE_ID="20-gemmascope-res-16k"
-SAE_IDX=(15153)
-TRANSFORMER_LENS=True
-TYPE="inference"
-N_SHOT=0
-DATASET="svamp"
-T=2
-OMEGA=1
+PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
+N_SHOTS=0
 
-python train/sae.py \
+
+python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
     --data_root ${DATA_ROOT} \
     --cache_dir ${CACHE_DIR} \
@@ -46,13 +41,7 @@ python train/sae.py \
     --type ${TYPE} \
     --sae_file ${SAE_FILE} \
     --param_file ${PARAM_FILE} \
-    --transformer_lens \
     --sae_id ${SAE_ID} \
-    --grid_search \
-    --steer_vec_sae \
-    --n_shot ${N_SHOT}\
-    --sae_idx ${SAE_IDX[@]} \
-    --dataset  ${DATASET} \
-    --coeff ${COEFF[@]} \
-    --T ${T} \
-    --omega ${OMEGA} \
+    --n_shot ${N_SHOTS} \
+    --vllm \
+    --add_instruction \

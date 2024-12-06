@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import sympy as sp
+import torch
 
 test_url = {
     "gsm8k": "https://raw.githubusercontent.com/openai/grade-school-math/"
@@ -385,3 +386,16 @@ def simplify_latex_expression(expression):
         return str(evaluated_expression)
     except Exception:
         return expression
+
+
+def load_tensor(base_directory, file_name):
+    # 构建文件名
+    file_path = os.path.join(base_directory, file_name)
+
+    if os.path.exists(file_path):
+        print(f"Loading tensor from {file_path}")
+        tensor = torch.load(file_path)
+        return tensor
+    else:
+        print(f"File {file_name} not found in {base_directory}, skipping.")
+        return None

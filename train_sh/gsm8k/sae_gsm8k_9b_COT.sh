@@ -47,6 +47,5 @@ python -u train/sae.py \
     --cot_flag \
     --sae_id ${SAE_ID} \
     --devices ${N_DEVICES} \
-    --cumulative \
     --dataset ${DATASET} \
     --bfloat16
