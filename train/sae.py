@@ -715,7 +715,7 @@ def main():
                     else:
                         cum = sae_acts[-1]
                     top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
-                    print(top_k_indices)
+                    # print(top_k_indices)
                 else:
                     top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
                     for ind in top_k_indices:

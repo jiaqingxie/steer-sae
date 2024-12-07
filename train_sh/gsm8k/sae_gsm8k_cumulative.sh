@@ -45,4 +45,5 @@ python -u train/sae.py \
     --sae_id ${SAE_ID} \
     --cot_flag \
     --seed ${SEED} \
+    --cumulative \
     --dataset ${DATASET} \
