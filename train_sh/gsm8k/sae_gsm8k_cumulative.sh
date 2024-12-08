@@ -40,7 +40,6 @@ python -u train/sae.py \
     --K ${K} \
     --type ${TYPE} \
     --sae_file ${SAE_FILE} \
-    --param_file ${PARAM_FILE} \
     --transformer_lens \
     --sae_id ${SAE_ID} \
     --seed ${SEED} \
