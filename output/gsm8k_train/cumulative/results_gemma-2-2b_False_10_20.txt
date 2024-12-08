@@ -1,0 +1,10 @@
+SAE Index: 6868, Cardinality: 68.413515625, Description: references to numerical values and calculations
+SAE Index: 12748, Cardinality: 60.2568671875, Description: specific terms related to medical conditions and legal terminology
+SAE Index: 2221, Cardinality: 43.49377734375, Description: conjunctions and transitional phrases used to connect thoughts or clauses
+SAE Index: 10640, Cardinality: 28.1464453125, Description: instructions related to navigating and managing web interfaces or applications
+SAE Index: 9761, Cardinality: 26.19603125, Description: instances of the prefix \\\"de\\\" in various contexts
+SAE Index: 15510, Cardinality: 25.404080078125, Description: expressions of criticism and complaints regarding actions or decisions
+SAE Index: 2899, Cardinality: 23.471046875, Description: elements related to sports competition and match outcomes
+SAE Index: 8684, Cardinality: 22.534404296875, Description:  instances of the word \\\"catch\\\" and its variations, indicating a focus on capturing attention or interest
+SAE Index: 15153, Cardinality: 20.22670703125, Description: words and phrases related to religious or moral teachings, especially those that are preachy in nature
+SAE Index: 13541, Cardinality: 19.453279296875, Description: references to significant events or individuals, particularly in sports and political contexts
