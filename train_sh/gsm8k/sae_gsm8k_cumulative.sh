@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_cumulative_cot.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_cumulative_cot.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_no_cumulative_cot.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_no_cumulative_cot.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -26,7 +26,7 @@ PLOT_NUM=5
 K=10
 TYPE="sae"
 SAE_FILE="gemma-scope-2b-pt-res-canonical"
-SAE_ID="21-gemmascope-res-16k"
+SAE_ID="20-gemmascope-res-16k"
 TRANSFORMER_LENS=True
 DATASET="gsm8k_train"
 NUM_SAE=1000
@@ -42,7 +42,6 @@ python -u train/sae.py \
     --sae_file ${SAE_FILE} \
     --transformer_lens \
     --sae_id ${SAE_ID} \
-    --cumulative \
     --dataset ${DATASET} \
     --NUM_SAE ${NUM_SAE} \
     --cot_flag \

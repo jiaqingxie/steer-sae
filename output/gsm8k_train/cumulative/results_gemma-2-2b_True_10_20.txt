@@ -1,10 +1,10 @@
-SAE Index: 15153, Cardinality: 50.49268359375, Description: words and phrases related to religious or moral teachings, especially those that are preachy in nature
-SAE Index: 435, Cardinality: 36.7698359375, Description: technical terms and components related to account management and verification processes
-SAE Index: 6631, Cardinality: 36.6056328125, Description: terms related to geographical locations and their political contexts
-SAE Index: 6163, Cardinality: 28.993912109375, Description: programming-related constructs, specifically classes and methods within object-oriented programming
-SAE Index: 15510, Cardinality: 26.1366328125, Description: expressions of criticism and complaints regarding actions or decisions
-SAE Index: 1858, Cardinality: 24.501673828125, Description: special characters and whitespace patterns in the text
-SAE Index: 15829, Cardinality: 23.914083984375, Description:  punctuation marks and code block delimiters
-SAE Index: 2966, Cardinality: 17.483912109375, Description:  forms of the word \\\"si\\\" and its variations, indicating a focus on specific Italian or related terms
-SAE Index: 10269, Cardinality: 16.255994140625, Description: functions related to displaying messages or alerts, specifically through Toast notifications
-SAE Index: 15846, Cardinality: 15.3403486328125, Description:  colloquial expressions and informal speech patterns
+SAE Index: 15153, Cardinality: 50.49268359375, Description:  mathematical expressions and relationships
+SAE Index: 435, Cardinality: 36.7698359375, Description:  mathematical expressions and comparisons
+SAE Index: 6631, Cardinality: 36.6056328125, Description: the beginning of a text or important markers in a document
+SAE Index: 6163, Cardinality: 28.993912109375, Description: monetary values and their associated attributes in different contexts
+SAE Index: 15510, Cardinality: 26.1366328125, Description: elements of structured formatting or organization in text, particularly in tables or lists
+SAE Index: 1858, Cardinality: 24.501673828125, Description: punctuation marks and sentence endings
+SAE Index: 15829, Cardinality: 23.914083984375, Description: questions and inquiries, particularly those seeking explanations or answers
+SAE Index: 2966, Cardinality: 17.483912109375, Description: technical terms related to mechanical or electrical components and their functions
+SAE Index: 10269, Cardinality: 16.255994140625, Description: quantitative measurements and comparisons in the text
+SAE Index: 15846, Cardinality: 15.3403486328125, Description: mathematical terminology and expressions related to vectors and equations

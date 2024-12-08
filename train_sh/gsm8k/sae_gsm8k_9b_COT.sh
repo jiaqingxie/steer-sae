@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/9b_cumulative_no_cot.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/9b_cumulative_no_cot.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/9b_no_cumulative_no_cot.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/9b_no_cumulative_no_cot.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -50,5 +50,3 @@ python -u train/sae.py \
     --dataset ${DATASET} \
     --bfloat16 \
     --NUM_SAE ${NUM_SAE} \
-    --cumulative \
-    --cot_flag \
