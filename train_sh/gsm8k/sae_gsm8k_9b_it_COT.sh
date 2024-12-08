@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/%j.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/%j.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/9b_it_cumulative_no_cot.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/9b_it_cumulative_no_cot.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -33,6 +33,7 @@ SAE_ID="31-gemmascope-res-16k"
 PARAM_FILE="layer_31/width_16k/average_l0_76/params.npz"
 TRANSFORMER_LENS=True
 DATASET="gsm8k_train"
+NUM_SAE=1000
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -41,7 +42,6 @@ python -u train/sae.py \
     --layer_idx ${LAYER_IDX} \
     --plot_num ${PLOT_NUM} \
     --K ${K} \
-    --cot_flag \
     --type ${TYPE} \
     --sae_file ${SAE_FILE} \
     --param_file ${PARAM_FILE} \
@@ -50,3 +50,5 @@ python -u train/sae.py \
     --devices ${N_DEVICES} \
     --bfloat16 \
     --dataset ${DATASET} \
+    --cumulative \
+    --NUM_SAE ${NUM_SAE} \
