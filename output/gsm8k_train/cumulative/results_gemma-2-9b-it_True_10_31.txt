@@ -1,10 +1,10 @@
-SAE Index: 2995, Cardinality: 59.64458203125, Description: different types of data structures and their attributes
-SAE Index: 6096, Cardinality: 54.3021875, Description:  phrases and contexts that indicate differing interpretations or meanings
-SAE Index: 15219, Cardinality: 50.82869921875, Description:  elements of mathematical expressions and functions
-SAE Index: 13390, Cardinality: 50.4601875, Description:  phrases and terms related to legal analysis and reasoning in court cases
-SAE Index: 2967, Cardinality: 45.46681640625, Description: technical terms and coding references related to programming and web development
-SAE Index: 11338, Cardinality: 41.95333984375, Description:  mathematical calculations and assessments related to health metrics, particularly in the context of obesity and metabolic factors
-SAE Index: 5679, Cardinality: 40.56158984375, Description: references to specific data science tools and technologies
-SAE Index: 15882, Cardinality: 33.71997265625, Description:  mathematical expressions and programming structures
-SAE Index: 1649, Cardinality: 33.34756640625, Description: elements related to structured organizational or legal discussions
-SAE Index: 9219, Cardinality: 33.27584375, Description: mathematical operations and simplifications involving variables
+SAE Index: 2995, Cardinality: 59.608984375, Description: different types of data structures and their attributes
+SAE Index: 6096, Cardinality: 53.595890625, Description:  phrases and contexts that indicate differing interpretations or meanings
+SAE Index: 13390, Cardinality: 50.40323046875, Description:  phrases and terms related to legal analysis and reasoning in court cases
+SAE Index: 15219, Cardinality: 49.95005859375, Description:  elements of mathematical expressions and functions
+SAE Index: 2967, Cardinality: 46.46017578125, Description: technical terms and coding references related to programming and web development
+SAE Index: 5679, Cardinality: 40.512, Description: references to specific data science tools and technologies
+SAE Index: 11338, Cardinality: 40.1227265625, Description:  mathematical calculations and assessments related to health metrics, particularly in the context of obesity and metabolic factors
+SAE Index: 1649, Cardinality: 33.1703203125, Description: elements related to structured organizational or legal discussions
+SAE Index: 9219, Cardinality: 33.14702734375, Description: mathematical operations and simplifications involving variables
+SAE Index: 15882, Cardinality: 32.8144921875, Description:  mathematical expressions and programming structures
