@@ -50,4 +50,5 @@ python -u train/sae.py \
     --dataset ${DATASET} \
     --bfloat16 \
     --NUM_SAE ${NUM_SAE} \
-    --cumulative
+    --cumulative \
+    --cot_flag \

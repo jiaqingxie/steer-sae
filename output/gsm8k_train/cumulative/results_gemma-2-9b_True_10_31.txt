@@ -1,10 +1,10 @@
-SAE Index: 1126, Cardinality: 76.63671875, Description:  numerical data and references in structured formats
-SAE Index: 7007, Cardinality: 57.281328125, Description: terms related to automotive diagnostics and their connection methods
-SAE Index: 6782, Cardinality: 40.773109375, Description: technical terms and processes related to scientific algorithms and methodologies
-SAE Index: 10817, Cardinality: 36.8457734375, Description: technical terms and concepts related to data processing and analysis
-SAE Index: 12946, Cardinality: 36.467484375, Description: phrases indicating reasons or justifications in legal or analytical contexts
-SAE Index: 1744, Cardinality: 32.84435546875, Description:  mathematical terms and expressions
-SAE Index: 548, Cardinality: 28.336837890625, Description:  mathematical expressions and symbols
-SAE Index: 2797, Cardinality: 27.044994140625, Description: questions and responses related to personal experiences and creative processes
-SAE Index: 8549, Cardinality: 26.535970703125, Description:  mathematical expressions or symbols used in proofs and formal definitions
-SAE Index: 9005, Cardinality: 25.603845703125, Description: terms and phrases related to healthcare interventions and studies
+SAE Index: 1126, Cardinality: 76.8028359375, Description:  numerical data and references in structured formats
+SAE Index: 7007, Cardinality: 58.21286328125, Description: terms related to automotive diagnostics and their connection methods
+SAE Index: 6782, Cardinality: 40.52406640625, Description: technical terms and processes related to scientific algorithms and methodologies
+SAE Index: 12946, Cardinality: 36.35283984375, Description: phrases indicating reasons or justifications in legal or analytical contexts
+SAE Index: 10817, Cardinality: 36.25492578125, Description: technical terms and concepts related to data processing and analysis
+SAE Index: 1744, Cardinality: 32.688015625, Description:  mathematical terms and expressions
+SAE Index: 548, Cardinality: 28.187099609375, Description:  mathematical expressions and symbols
+SAE Index: 2797, Cardinality: 27.010548828125, Description: questions and responses related to personal experiences and creative processes
+SAE Index: 9005, Cardinality: 25.757142578125, Description: terms and phrases related to healthcare interventions and studies
+SAE Index: 8549, Cardinality: 25.51905078125, Description:  mathematical expressions or symbols used in proofs and formal definitions
