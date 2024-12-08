@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_cumulative_no_cot.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_cumulative_no_cot.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_cumulative_cot.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_cumulative_cot.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -42,7 +42,7 @@ python -u train/sae.py \
     --sae_file ${SAE_FILE} \
     --transformer_lens \
     --sae_id ${SAE_ID} \
-    --seed ${SEED} \
     --cumulative \
     --dataset ${DATASET} \
     --NUM_SAE ${NUM_SAE} \
+    --cot_flag \
