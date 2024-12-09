@@ -31,6 +31,7 @@ DATASET="gsm8k_train"
 SEED=0
 steer_vec_base_directory="/cluster/project/sachan/jiaxie/SAE_Math/mean_vec"
 N_SHOTS=8
+NUM_SAE=1000
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -47,3 +48,4 @@ python -u train/sae.py \
     --calculate_mean_diff \
     --steer_vec_baseline \
     --n_shot ${N_SHOTS} \
+    --NUM_SAE ${NUM_SAE} \
