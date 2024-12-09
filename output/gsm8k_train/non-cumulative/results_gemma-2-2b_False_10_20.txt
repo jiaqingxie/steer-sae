@@ -1,0 +1,10 @@
+SAE Index: 6868, Cardinality: 1000, Description: technical details related to ability and functions associated with equipment or machinery
+SAE Index: 2221, Cardinality: 1000, Description: language surrounding conditions and actions related to technical processes or implementations
+SAE Index: 12748, Cardinality: 997, Description:  structured data representations and their attributes
+SAE Index: 15510, Cardinality: 997, Description: elements of structured formatting or organization in text, particularly in tables or lists
+SAE Index: 9761, Cardinality: 983, Description: references to programming concepts and discussions around array structures in computer science
+SAE Index: 10640, Cardinality: 975, Description: information about critiques and evaluations in research studies
+SAE Index: 2899, Cardinality: 944, Description: specific instructions or steps related to a process
+SAE Index: 8684, Cardinality: 649, Description:  technical jargon and programming-related terms
+SAE Index: 15153, Cardinality: 513, Description:  mathematical expressions and relationships
+SAE Index: 9402, Cardinality: 466, Description: the term \\\"is\\\" used in various contexts, indicating definitions or states of being

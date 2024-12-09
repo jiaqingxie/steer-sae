@@ -1,0 +1,10 @@
+SAE Index: 15153, Cardinality: 1000, Description:  mathematical expressions and relationships
+SAE Index: 6163, Cardinality: 1000, Description: monetary values and their associated attributes in different contexts
+SAE Index: 435, Cardinality: 997, Description:  mathematical expressions and comparisons
+SAE Index: 15510, Cardinality: 989, Description: elements of structured formatting or organization in text, particularly in tables or lists
+SAE Index: 6631, Cardinality: 975, Description: the beginning of a text or important markers in a document
+SAE Index: 1858, Cardinality: 896, Description: punctuation marks and sentence endings
+SAE Index: 15829, Cardinality: 865, Description: questions and inquiries, particularly those seeking explanations or answers
+SAE Index: 2966, Cardinality: 389, Description: technical terms related to mechanical or electrical components and their functions
+SAE Index: 12783, Cardinality: 364, Description: references to numerical data and counts related to various contexts
+SAE Index: 14426, Cardinality: 242, Description: phrases related to financial costs and savings

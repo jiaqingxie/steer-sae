@@ -1,0 +1,10 @@
+SAE Index: 5679, Cardinality: 1000, Description: references to specific data science tools and technologies
+SAE Index: 2995, Cardinality: 1000, Description: different types of data structures and their attributes
+SAE Index: 1426, Cardinality: 993, Description:  phrases with statistical or probabilistic references
+SAE Index: 2492, Cardinality: 967, Description:  phrases related to processes and outcomes in negotiations or transactions
+SAE Index: 10044, Cardinality: 852, Description:  references to statistical analysis and methods in research contexts
+SAE Index: 10807, Cardinality: 484, Description: specialized formatting or notation related to scientific or mathematical expressions
+SAE Index: 13529, Cardinality: 366, Description:  mathematical operations and problem-solving context
+SAE Index: 11338, Cardinality: 328, Description:  mathematical calculations and assessments related to health metrics, particularly in the context of obesity and metabolic factors
+SAE Index: 13390, Cardinality: 307, Description:  phrases and terms related to legal analysis and reasoning in court cases
+SAE Index: 2207, Cardinality: 301, Description: elements associated with measurements or scientific data
