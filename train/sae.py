@@ -131,7 +131,7 @@ def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction):
         input_text_prompt = demo + "Question: Answer Choices: " + input_text + "\n" + "Answer:"
     else:
         if add_instruction:
-            input_text_prompt = demo + "Question: " + input_text + " Please reason step by step\n" + "Answer:"
+            input_text_prompt = demo + "Question: " + input_text + " Please reason step by step.\n" + "Answer:"
         else:
             input_text_prompt = demo + "Question: " + input_text + "\n" + "Answer:"
         

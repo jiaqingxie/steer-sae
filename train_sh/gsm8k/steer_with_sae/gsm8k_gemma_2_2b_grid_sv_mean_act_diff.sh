@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/gsm8k_0shot_C5_T2_omega1_mean_act_vec.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/gsm8k_0shot_C5_T2_omega1_mean_act_vec.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/gsm8k_0shot_C15_T3_omega1_mean_act_vec.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/gsm8k_0shot_C15_T3_omega1_mean_act_vec.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -19,7 +19,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-COEFF=(5 900)
+COEFF=(15 900)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 K=10
 LAYER_IDX=20
@@ -32,7 +32,7 @@ SAE_IDX=(15153)
 TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
-T=2
+T=3
 OMEGA=1
 STEERING_TYPE="mean_act_diff"
 steer_vec_base_directory="/cluster/project/sachan/jiaxie/SAE_Math/mean_vec"

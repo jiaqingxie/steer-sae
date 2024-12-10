@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_mawps_0shot_C15_T3_omega1_mean_act_vec.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_mawps_0shot_C15_T3_omega1_mean_act_vec.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_svamp_0shot_C15_T3_omega1_mean_act_vec.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_svamp_0shot_C15_T3_omega1_mean_act_vec.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -36,7 +36,7 @@ T=3
 OMEGA=1
 STEERING_TYPE="mean_act_diff"
 steer_vec_base_directory="/cluster/project/sachan/jiaxie/SAE_Math/mean_vec"
-DATASET="mawps"
+DATASET="svamp"
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
