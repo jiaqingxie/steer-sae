@@ -636,10 +636,16 @@ def main():
                 cache_name = f"blocks.{args.layer_idx}.hook_resid_post"
                 _, cache = model.run_with_cache(input_text,
                                                 names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post')
-                act_original = cache[cache_name]
+                if args.devices == 2:
+                    act_original = cache[cache_name].to("cuda:1")
+                else:
+                    act_original =cache[cache_name]
                 _, cache = model.run_with_cache(input_text_COT,
                                                 names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post')
-                act_cot = cache[cache_name]
+                if args.devices == 2:
+                    act_cot = cache[cache_name].to("cuda:1")
+                else:
+                    act_cot = cache[cache_name]
 
 
                 if args.calculate_mean_diff:
@@ -648,6 +654,11 @@ def main():
                     else:
                         steering_vec = act_cot[:, -1, :] - act_original[:, -1, :]
 
+                    del cache
+                    del act_original
+                    del act_cot
+                    gc.collect()
+                    torch.cuda.empty_cache()
                 else:
                     continue
             else:
