@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/mawps-9b-inference.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/mawps-9b-inference.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/mawps-9b-inference_cot.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/mawps-9b-inference_cot.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -29,7 +29,7 @@ TYPE="inference"
 SAE_FILE="gemma-scope-9b-pt-res-canonical"
 SAE_ID="31-gemmascope-res-16k"
 PARAM_FILE="layer_31/width_16k/average_l0_63/params.npz"
-N_SHOTS=0
+N_SHOTS=8
 DATASET="mawps"
 
 
@@ -48,3 +48,4 @@ python -u train/sae.py \
     --vllm \
     --bfloat16 \
     --dataset ${DATASET} \
+    --cot_flag \

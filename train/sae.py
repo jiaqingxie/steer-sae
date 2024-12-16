@@ -531,7 +531,7 @@ def main():
 
             )
         else:
-            sampling_params = dict( top_p=1.0, temperature=0.05, freq_penalty=1)
+            sampling_params = dict( top_p=0.95, temperature=0, freq_penalty=1)
 
         if args.type == "inference":
             if args.steer_vec_sae:
@@ -556,12 +556,13 @@ def main():
                         return
 
                     if steering_on:
-                        tilde_pre = resid_pre + args.coeff[0] * math.pow(1/ (args.omega * coeff1_dynamic()), args.T) * steering_vector
-                        resid_pre[:, :, :] = tilde_pre * torch.norm(resid_pre[:, :, :], p=2) / torch.norm(tilde_pre,
-                                                                                                          p=2)
+                        tilde_pre = resid_pre[:, :, :] + args.coeff[0] * math.pow(1/ (args.omega * coeff1_dynamic()), args.T) * steering_vector
+                        resid_pre[:, :, :] = tilde_pre * torch.norm(resid_pre[:, :, :], p=2) / torch.norm(tilde_pre, p=2)
+
 
                 def dynamic_coeff1():
                     dynamic_coeff1.counter += 1
+
                     return dynamic_coeff1.counter
 
                 dynamic_coeff1.counter = 0

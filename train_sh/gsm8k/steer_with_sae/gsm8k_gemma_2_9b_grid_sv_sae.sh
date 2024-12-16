@@ -1,13 +1,14 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_gsm8k_0shot_C200_T2_omega1.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_gsm8k_0shot_C200_T2_omega1.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_gsm8k_0shot_C2400_T3_omega1_6782.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_gsm8k_0shot_C2400_T3_omega1_6782.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
 #SBATCH --time=10:00:00
 
 module load eth_proxy
+export HF_HOME=/cluster/scratch/jiaxie/.cache/huggingface
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
 
@@ -19,7 +20,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b"
-COEFF=(200 900)
+COEFF=(2400)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 K=10
 LAYER_IDX=31
@@ -28,11 +29,11 @@ PARAM_FILE="layer_31/width_16k/average_l0_63/params.npz"
 PLOT_NUM=5
 SAE_FILE="gemma-scope-9b-pt-res-canonical"
 SAE_ID="31-gemmascope-res-16k"
-SAE_IDX=(12946)
+SAE_IDX=(6782)
 TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
-T=2
+T=3
 OMEGA=1
 
 python -u train/sae.py \
