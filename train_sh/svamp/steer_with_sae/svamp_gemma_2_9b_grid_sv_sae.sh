@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_0shot_C400_T3_omega0.5_6782.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_0shot_C400_T3_omega0.5_6782.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_0shot_C400_T4_omega0.5_6782.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_0shot_C400_T4_omega0.5_6782.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -33,7 +33,7 @@ SAE_IDX=(6782)
 TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
-T=3
+T=4
 OMEGA=0.5
 DATASET="svamp"
 

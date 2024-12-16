@@ -128,12 +128,12 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
 def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction):
     demo = create_demo_text(n_shot, cot_flag, dataset)
     if dataset in ["aqua"]:
-        input_text_prompt = demo + "Question: Answer Choices: " + input_text + "\n" + "Answer:"
+        input_text_prompt = demo + "Question: Answer Choices: " + input_text + " \n" + "Answer:"
     else:
         if add_instruction:
             input_text_prompt = demo + "Question: " + input_text + " Please reason step by step.\n" + "Answer:"
         else:
-            input_text_prompt = demo + "Question: " + input_text + "\n" + "Answer:"
+            input_text_prompt = demo + "Question: " + input_text + " \n" + "Answer:"
         
     return input_text_prompt
 
@@ -531,7 +531,7 @@ def main():
 
             )
         else:
-            sampling_params = dict( top_p=0.95, temperature=0, freq_penalty=1)
+            sampling_params = dict( top_p=0.95, temperature=0)
 
         if args.type == "inference":
             if args.steer_vec_sae:
@@ -593,6 +593,10 @@ def main():
                             break
 
                         if "<eos>" in model.to_string(new_token):
+                            break
+                        elif "therefore" in model.to_string(new_token):
+                            break
+                        elif "Therefore" in model.to_string(new_token):
                             break
 
                     return generated_tokens
