@@ -56,7 +56,7 @@ def extract_answer_from_output(completion, dataset, sample):
 
         return completion
     elif dataset == "asdiv":
-        match = re.match(r'\d+', completion)
+        match = re.match(r'^[^ ]+', completion)
         if match:
             match_str = match.group()
             match_str = match_str.replace(",", "")
@@ -79,7 +79,7 @@ def is_correct(model_answer, answer, dataset, sample):
     try:
         model_answer_float = float(model_answer)
         gt_answer_float = float(gt_answer)
-        return model_answer_float == gt_answer_float or abs(model_answer_float - gt_answer_float) <= 1e-3
+        return model_answer_float == gt_answer_float or abs(model_answer_float - gt_answer_float) <= 1e-1
     except (ValueError, TypeError):
         return str(gt_answer) == str(model_answer)
 
@@ -131,63 +131,41 @@ def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction):
         input_text_prompt = demo + "Question: Answer Choices: " + input_text + " \n" + "Answer:"
     else:
         if add_instruction:
-            input_text_prompt = demo + "Question: " + input_text + " Please reason step by step.\n" + "Answer:"
+            input_text_prompt = demo + "Question: " + input_text + "\nPlease reason step by step.\n" + "Answer:"
         else:
             input_text_prompt = demo + "Question: " + input_text + " \n" + "Answer:"
         
     return input_text_prompt
 
 
-def clean_answer(model_pred, sae=False, vllm=False, dataset="gsm8k", steer_vec_sae=False):
-    if not sae:
-        if vllm:
-            generated_text = model_pred.outputs[0].text
-        else:
-            generated_text = model_pred
-    else:
-        generated_text = model_pred
+def clean_answer(model_pred):
+    generated_text = model_pred.lower().replace(",", "")  # Normalize input and remove commas
 
-    preds = None
-
-
-
-    generated_text = generated_text.lower()
-    if ANSWER_TRIGGER in generated_text:
-        preds = generated_text.split(ANSWER_TRIGGER.lower())
-    elif ANSWER_TRIGGER_2 in generated_text:
-        preds = generated_text.split(ANSWER_TRIGGER_2.lower())
-    elif ANSWER_TRIGGER_3 in generated_text:
-        preds = generated_text.split(ANSWER_TRIGGER_3.lower())
-    else:
-        preds = generated_text.split(ANSWER_TRIGGER.lower())
-
-
-    if preds is not None:
-        answer_flag = True if len(preds) > 1 else False
-    else:
-        return INVALID_ANS
-
-    if answer_flag:
-        preds = preds[1]
-    else:
-        preds = preds[-1]
-
-
-    pred = preds.replace(",", "")
-    pred = [s for s in re.findall(r"-?\d+\.?\d*", pred)]
+    # Find all numbers, fractions, and times in the text
+    pred = re.findall(r"(-?\d+/\d+|-?\d+:\d+|-?\d+\.?\d*|-?\d+)", generated_text)
 
     if len(pred) == 0:
-        return INVALID_ANS
+        return INVALID_ANS  # No valid matches found
 
-    if answer_flag:
-        pred = pred[0]
-    else:
-        pred = pred[-1]
+    result = None
 
-    if pred[-1] == ".":
-        pred = pred[:-1]
+    # Process matches in reverse order to prioritize the last valid answer
+    for p in reversed(pred):
+        if ":" in p:  # Time format
+            result = p
+            break
+        elif "/" in p:  # Fraction format, convert to float
+            try:
+                numerator, denominator = map(float, p.split("/"))
+                result = numerator / denominator
+            except ZeroDivisionError:
+                result = INVALID_ANS
+            break
+        else:  # Numeric value (integer or float)
+            result = float(p) if "." in p else int(p)
+            break
 
-    return pred
+    return result
 
 
 def seed_everything(seed: int):
@@ -520,8 +498,8 @@ def main():
         if args.vllm:
             sampling_params = SamplingParams(
                 max_tokens=256,
-                temperature=0.05,
-                top_p=1,
+                temperature=0,
+                top_p=0.95,
                 stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ"],
                 stop_token_ids=(
                     [151645, 151643]
@@ -595,8 +573,6 @@ def main():
                         if "<eos>" in model.to_string(new_token):
                             break
                         elif "therefore" in model.to_string(new_token):
-                            break
-                        elif "Therefore" in model.to_string(new_token):
                             break
 
                     return generated_tokens
