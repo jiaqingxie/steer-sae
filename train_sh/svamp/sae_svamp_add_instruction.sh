@@ -1,13 +1,14 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/svamp-gemma2-2b-inference-add-instruction.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/svamp-gemma2-2b-inference-add-instruction.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_2b_svamp_inference_instruction.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_2b_svamp_inference_instruction.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
 #SBATCH --time=3:00:00
 
 module load eth_proxy
+export HF_HOME=/cluster/scratch/jiaxie/.cache/huggingface
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
 

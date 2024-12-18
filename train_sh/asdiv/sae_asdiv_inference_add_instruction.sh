@@ -1,30 +1,28 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/asdiv-gemma2-2b-inference-add-instruction.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/asdiv-gemma2-2b-inference-add-instruction.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_2b_asdiv_inference_instruction.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_2b_asdiv_inference_instruction.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
 #SBATCH --time=3:00:00
 
 module load eth_proxy
+export HF_HOME=/cluster/scratch/jiaxie/.cache/huggingface
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
-
 
 cd /cluster/scratch/jiaxie/
 source sae/bin/activate
 
 cd /cluster/project/sachan/jiaxie/SAE_Math
 
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
-
-
 MODEL_NAME_OR_PATH="google/gemma-2-2b"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
-
 TYPE="inference"
 N_SHOT=0
 DATASET="asdiv"

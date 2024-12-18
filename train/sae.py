@@ -128,18 +128,27 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
 def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction):
     demo = create_demo_text(n_shot, cot_flag, dataset)
     if dataset in ["aqua"]:
-        input_text_prompt = demo + "Question: Answer Choices: " + input_text + " \n" + "Answer:"
+        input_text_prompt = demo + "Q: Answer Choices: " + input_text + "\n" + "A:"
     else:
         if add_instruction:
-            input_text_prompt = demo + "Question: " + input_text + "\nPlease reason step by step.\n" + "Answer:"
+            input_text_prompt = demo + "Question: " + input_text + " Please reason step by step.\n" + "Answer:"
         else:
             input_text_prompt = demo + "Question: " + input_text + " \n" + "Answer:"
-        
+
+    # print(input_text_prompt)
     return input_text_prompt
 
 
-def clean_answer(model_pred):
-    generated_text = model_pred.lower().replace(",", "")  # Normalize input and remove commas
+def clean_answer(model_pred, sae, vllm, dataset="gsm8k", steer_vec_sae=False):
+    if not sae:
+        if vllm:
+            generated_text = model_pred.outputs[0].text
+        else:
+            generated_text = model_pred
+    else:
+        generated_text = model_pred
+
+    generated_text = generated_text.lower().replace(",", "")  # Normalize input and remove commas
 
     # Find all numbers, fractions, and times in the text
     pred = re.findall(r"(-?\d+/\d+|-?\d+:\d+|-?\d+\.?\d*|-?\d+)", generated_text)
@@ -439,7 +448,7 @@ def generate(model, tokenizer, input_text, generate_kwargs, vllm):
 def main():
     args = parse_args()
 
-    seed_everything(args.seed)
+    seed_everything(0)
 
     test_filepath = os.path.join(args.data_root, args.dataset + "_test.jsonl")
     if not os.path.exists(test_filepath):
@@ -493,12 +502,11 @@ def main():
     for sample in tqdm(list_data_dict):
 
         input_text = build_prompt(sample["instruction"], args.n_shot, args.cot_flag, args.dataset, args.add_instruction)
-        input_text = input_text.strip(" ")
 
         if args.vllm:
             sampling_params = SamplingParams(
                 max_tokens=256,
-                temperature=0,
+                temperature=0.05,
                 top_p=0.95,
                 stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ"],
                 stop_token_ids=(
@@ -509,7 +517,7 @@ def main():
 
             )
         else:
-            sampling_params = dict( top_p=0.95, temperature=0)
+            sampling_params = dict( top_p=1, temperature=0.05)
 
         if args.type == "inference":
             if args.steer_vec_sae:
@@ -572,8 +580,6 @@ def main():
 
                         if "<eos>" in model.to_string(new_token):
                             break
-                        elif "therefore" in model.to_string(new_token):
-                            break
 
                     return generated_tokens
 
@@ -592,6 +598,8 @@ def main():
 
                     return answer
                 with torch.no_grad():
+                    seed_everything(0)
+                    dynamic_coeff1.counter = 0
                     model_completion = run_generate(input_text)
                 gc.collect()
                 torch.cuda.empty_cache()

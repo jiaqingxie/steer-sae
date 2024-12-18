@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_gsm8k_0shot_C550_T3_omega1.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_gsm8k_0shot_C550_T3_omega1.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_gsm8k_0shot_C600_T3_omega1_15153.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_gsm8k_0shot_C600_T3_omega1_15153.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -19,7 +19,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-COEFF=(550 900)
+COEFF=(600)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 K=10
 LAYER_IDX=20

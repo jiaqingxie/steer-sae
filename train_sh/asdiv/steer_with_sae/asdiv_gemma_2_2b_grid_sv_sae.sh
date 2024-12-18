@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_asdiv_0shot_C600_T2_omega1_1642.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_asdiv_0shot_C600_T2_omega1_1642.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_asdiv_0shot_C600_T3_omega1_15153.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_asdiv_0shot_C600_T3_omega1_15153.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
-#SBATCH --time=7:00:00
+#SBATCH --time=8:00:00
 
 module load eth_proxy
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
@@ -19,7 +19,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-COEFF=(600 900)
+COEFF=(600)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 K=10
 LAYER_IDX=20
@@ -28,12 +28,12 @@ PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
 PLOT_NUM=5
 SAE_FILE="gemma-scope-2b-pt-res-canonical"
 SAE_ID="20-gemmascope-res-16k"
-SAE_IDX=(1642)
+SAE_IDX=(15153)
 TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
 DATASET="asdiv"
-T=2
+T=3
 OMEGA=1
 
 
