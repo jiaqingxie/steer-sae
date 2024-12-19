@@ -507,7 +507,7 @@ def main():
             sampling_params = SamplingParams(
                 max_tokens=256,
                 temperature=0.05,
-                top_p=0.95,
+                top_p=1,
                 stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ"],
                 stop_token_ids=(
                     [151645, 151643]
@@ -662,6 +662,8 @@ def main():
 
 
                 model_completion = generate(model, tokenizer, input_text, sampling_params, args.vllm)
+                if args.vllm:
+                    model_completion = model_completion.outputs[0].text
                 if args.dataset == "aqua":
                     model_answer = choice_answer_clean(model_completion, args.vllm)
                 elif args.dataset == "math":
