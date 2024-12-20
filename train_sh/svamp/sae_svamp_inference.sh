@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_2b_svamp_inference.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_2b_svamp_inference.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_2b_svamp_inference_cot.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_2b_svamp_inference_cot.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -27,7 +27,7 @@ MODEL_NAME_OR_PATH="google/gemma-2-2b"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
 
 TYPE="inference"
-N_SHOT=0
+N_SHOT=8
 DATASET="svamp"
 
 python -u train/sae.py \
@@ -39,4 +39,5 @@ python -u train/sae.py \
     --n_shot ${N_SHOT}\
     --dataset ${DATASET} \
     --vllm \
+    --cot_flag \
 

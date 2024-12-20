@@ -129,6 +129,11 @@ def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction):
     demo = create_demo_text(n_shot, cot_flag, dataset)
     if dataset in ["aqua"]:
         input_text_prompt = demo + "Q: Answer Choices: " + input_text + "\n" + "A:"
+    elif dataset in ["gsm8k", "gsm8k_train"]:
+        if add_instruction:
+            input_text_prompt = demo + "Question: " + input_text + " Please reason step by step.\n" + "Answer:"
+        else:
+            input_text_prompt = demo + "Question: " + input_text + "\n" + "Answer:"
     else:
         if add_instruction:
             input_text_prompt = demo + "Question: " + input_text + " Please reason step by step.\n" + "Answer:"
@@ -662,8 +667,9 @@ def main():
 
 
                 model_completion = generate(model, tokenizer, input_text, sampling_params, args.vllm)
+                output_text = None
                 if args.vllm:
-                    model_completion = model_completion.outputs[0].text
+                    output_text = model_completion.outputs[0].text
                 if args.dataset == "aqua":
                     model_answer = choice_answer_clean(model_completion, args.vllm)
                 elif args.dataset == "math":
@@ -671,7 +677,8 @@ def main():
                     model_answer = simplify_latex_expression(model_answer)
                 else:
                     model_answer = clean_answer(model_completion, False, args.vllm, args.dataset, args.steer_vec_sae)
-
+                if args.vllm:
+                    model_completion = output_text
             if not args.calculate_mean_diff:
                 is_cor = is_correct(model_answer, sample["output"], args.dataset, sample)
                 answers.append(is_cor)

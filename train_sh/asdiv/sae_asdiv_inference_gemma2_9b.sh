@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/asdiv_inference_gemma2_9b_cot.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/asdiv_inference_gemma2_9b_cot.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_asdiv_inference_cot.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_asdiv_inference_cot.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -10,7 +10,6 @@
 module load eth_proxy
 export HF_HOME=/cluster/scratch/jiaxie/.cache/huggingface
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
-
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/triton_cache
 
 
