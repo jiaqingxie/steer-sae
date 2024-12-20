@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_mawps_0shot_C800_T4_omega0.6_6782.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_mawps_0shot_C800_T4_omega0.6_6782.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_mawps_0shot_C400_T4_omega0.5_6782.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_mawps_0shot_C400_T4_omega0.5_6782.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -20,7 +20,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math""
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b"
-COEFF=(800)
+COEFF=(400)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 K=10
 LAYER_IDX=31
@@ -34,7 +34,7 @@ TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
 T=4
-OMEGA=0.6
+OMEGA=0.5
 DATASET="mawps"
 
 python -u train/sae.py \
