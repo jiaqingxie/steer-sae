@@ -5,10 +5,9 @@
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
-#SBATCH --time=10:00:00
+#SBATCH --time=08:00:00
 
 module load eth_proxy
-export HF_HOME=/cluster/scratch/jiaxie/.cache/huggingface
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
 
