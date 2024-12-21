@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_gsm8k_inference_cot.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_gsm8k_inference_cot.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_gsm8k_inference_instruction.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_gsm8k_inference_instruction.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -23,7 +23,7 @@ MODEL_NAME_OR_PATH="google/gemma-2-9b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b"
 TYPE="inference"
-N_SHOTS=8
+N_SHOTS=0
 
 
 python -u train/sae.py \
@@ -35,4 +35,4 @@ python -u train/sae.py \
     --n_shot ${N_SHOTS} \
     --vllm \
     --bfloat16 \
-    --cot_flag \
+    --add_instruction \

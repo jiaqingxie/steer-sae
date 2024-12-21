@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_2b_gsm8k_inference_cot.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_2b_gsm8k_inference_cot.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_2b_gsm8k_inference.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_2b_gsm8k_inference.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -29,7 +29,7 @@ TYPE="inference"
 SAE_FILE="gemma-scope-2b-pt-res-canonical"
 SAE_ID="20-gemmascope-res-16k"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
-N_SHOTS=8
+N_SHOTS=0
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -44,4 +44,3 @@ python -u train/sae.py \
     --sae_id ${SAE_ID} \
     --n_shot ${N_SHOTS} \
     --vllm \
-    --cot_flag \
