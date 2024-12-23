@@ -30,6 +30,7 @@ SAE_ID="20-gemmascope-res-16k"
 TRANSFORMER_LENS=True
 DATASET="gsm8k_train"
 NUM_SAE=1000
+N_SHOT=8
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -46,3 +47,4 @@ python -u train/sae.py \
     --NUM_SAE ${NUM_SAE} \
     --cot_flag \
     --cumulative \
+    --n_shot ${N_SHOT} \

@@ -129,18 +129,13 @@ def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction):
     demo = create_demo_text(n_shot, cot_flag, dataset)
     if dataset in ["aqua"]:
         input_text_prompt = demo + "Q: Answer Choices: " + input_text + "\n" + "A:"
-    elif dataset in ["gsm8k", "gsm8k_train"]:
-        if add_instruction:
-            input_text_prompt = demo + "Question: " + input_text + "Please reason step by step.\n" + "Answer:"
-        elif cot_flag:
-            input_text_prompt = demo + "Q: " + input_text + "\n" + "A:"
-        else:
-            input_text_prompt = demo + "Question: " + input_text + "\n" + "Answer:"
     else:
         if add_instruction:
             input_text_prompt = demo + "Question: " + input_text + " Please reason step by step.\n" + "Answer:"
+        elif cot_flag:
+            input_text_prompt = demo + "Q: " + input_text + "\n" + "A:" # few-shot
         else:
-            input_text_prompt = demo + "Question: " + input_text + " \n" + "Answer:"
+            input_text_prompt = demo + "Question: " + input_text + " \n" + "Answer:Since" # 0-shot
 
     # print(input_text_prompt)
     return input_text_prompt
@@ -524,7 +519,10 @@ def main():
 
             )
         else:
-            sampling_params = dict( top_p=1, temperature=0.05)
+            if args.steer_vec_sae or args.steer_vec_baseline:
+                sampling_params = dict( top_p=1, temperature=0.05)
+            else:
+                sampling_params = dict(top_p=1, temperature=0.05, max_length=2048, do_sample=True)
 
         if args.type == "inference":
             if args.steer_vec_sae:
@@ -538,6 +536,7 @@ def main():
 
                 if args.devices == 2:
                     steering_vector = steering_vector.to("cuda:1")
+
                 sampling_kwargs = sampling_params
                 steering_on = True
                 eos_token_id = tokenizer.encode("Question", add_special_tokens=False)[0]
