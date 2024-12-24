@@ -102,9 +102,9 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
     for i in index_list[:n_shot]:
         if cot_flag:
             demo_text += (
-                "Q: "
+                "Question: "
                 + question[i]
-                + "\nA: "
+                + "\nAnswer: "
                 + chain[i]
                 + " "
                 + ANSWER_TRIGGER
@@ -132,10 +132,8 @@ def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction):
     else:
         if add_instruction:
             input_text_prompt = demo + "Question: " + input_text + " Please reason step by step.\n" + "Answer:"
-        elif cot_flag:
-            input_text_prompt = demo + "Q: " + input_text + "\n" + "A:" # few-shot
         else:
-            input_text_prompt = demo + "Question: " + input_text + " \n" + "Answer:Since" # 0-shot
+            input_text_prompt = demo + "Question: " + input_text + " \nAnswer:" # 0-shot
 
     # print(input_text_prompt)
     return input_text_prompt
@@ -205,7 +203,7 @@ def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens, n_device
         if bfloat16:
             llm = transformer_lens.HookedTransformer.from_pretrained_no_processing(model_name_or_path, n_devices = n_devices, torch_dtype=torch.bfloat16)
         else:
-            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices)
+            llm = transformer_lens.HookedTransformer.from_pretrained_no_processing(model_name_or_path, n_devices = n_devices)
     else:
         if bfloat16:
             llm = AutoModelForCausalLM.from_pretrained(model_name_or_path,device_map="auto",torch_dtype=torch.bfloat16, trust_remote_code=True)
@@ -449,7 +447,7 @@ def generate(model, tokenizer, input_text, generate_kwargs, vllm):
 
 def main():
     args = parse_args()
-
+    torch.set_grad_enabled(False)
     seed_everything(0)
 
     test_filepath = os.path.join(args.data_root, args.dataset + "_test.jsonl")
@@ -520,7 +518,7 @@ def main():
             )
         else:
             if args.steer_vec_sae or args.steer_vec_baseline:
-                sampling_params = dict( top_p=1, temperature=0.05)
+                sampling_params = dict( top_p=1, temperature=0.05, freq_penalty=1)
             else:
                 sampling_params = dict(top_p=1, temperature=0.05, max_length=2048, do_sample=True)
 
@@ -575,7 +573,8 @@ def main():
                                 max_new_tokens=1,
                                 do_sample=True,
                                 eos_token_id=[eos_token_id, eos_token_id_2],
-                                **kwargs
+                                **kwargs,
+                                verbose=False,
                             )
 
                         new_token = result[:, -1:]

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_mawps_0shot_C600_T3_omega1_15153.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_mawps_0shot_C600_T3_omega1_15153.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_mawps_0shot_C450_T0.5_omega1_15153.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_mawps_0shot_C450_T0.5_omega1_15153.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
-#SBATCH --time=8:00:00
+#SBATCH --time=10:00:00
 
 module load eth_proxy
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
@@ -19,7 +19,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-COEFF=(600)
+COEFF=(450)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 K=10
 LAYER_IDX=20
@@ -33,7 +33,7 @@ TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
 DATASET="mawps"
-T=3
+T=0.5
 OMEGA=1
 
 python -u train/sae.py \
