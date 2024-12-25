@@ -19,7 +19,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-COEFF=(600)
+COEFF=(450)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 K=10
 LAYER_IDX=20
@@ -36,7 +36,8 @@ DATASET="svamp"
 T=3
 OMEGA=1
 
-python train/sae.py \
+
+python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
     --data_root ${DATA_ROOT} \
     --cache_dir ${CACHE_DIR} \

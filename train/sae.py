@@ -125,7 +125,7 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
     return demo_text
 
 
-def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction):
+def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction, sae_word):
     demo = create_demo_text(n_shot, cot_flag, dataset)
     if dataset in ["aqua"]:
         input_text_prompt = demo + "Q: Answer Choices: " + input_text + "\n" + "A:"
@@ -133,8 +133,10 @@ def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction):
         if add_instruction:
             input_text_prompt = demo + "Question: " + input_text + " Please reason step by step.\n" + "Answer:"
         else:
-            input_text_prompt = demo + "Question: " + input_text + " \nAnswer:" # 0-shot
-
+            if sae_word == "":
+                input_text_prompt = demo + "Question: " + input_text + "\nAnswer:"
+            else:
+                input_text_prompt = demo + "Question: " + input_text + "\nAnswer: " + sae_word
     # print(input_text_prompt)
     return input_text_prompt
 
@@ -261,6 +263,12 @@ def parse_args():
         "--cot_flag",
         action="store_true",
         help="use chain of thought or not"
+    )
+    parser.add_argument(
+        "--sae_word",
+        type=str,
+        default="",
+        help="Word that is added after Answer: {} which is indicated by SAE"
     )
     parser.add_argument(
         "--bfloat16",
@@ -501,12 +509,12 @@ def main():
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
 
-        input_text = build_prompt(sample["instruction"], args.n_shot, args.cot_flag, args.dataset, args.add_instruction)
+        input_text = build_prompt(sample["instruction"], args.n_shot, args.cot_flag, args.dataset, args.add_instruction, args.sae_word)
 
         if args.vllm:
             sampling_params = SamplingParams(
                 max_tokens=256,
-                temperature=0.05,
+                temperature=0,
                 top_p=1,
                 stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ"],
                 stop_token_ids=(
@@ -518,9 +526,9 @@ def main():
             )
         else:
             if args.steer_vec_sae or args.steer_vec_baseline:
-                sampling_params = dict( top_p=1, temperature=0.05, freq_penalty=1)
+                sampling_params = dict(top_p=1, temperature=0, freq_penalty=0)
             else:
-                sampling_params = dict(top_p=1, temperature=0.05, max_length=2048, do_sample=True)
+                sampling_params = dict(top_p=1, temperature=0, max_length=2048, do_sample=True)
 
         if args.type == "inference":
             if args.steer_vec_sae:
@@ -620,7 +628,7 @@ def main():
                 if cnt == args.NUM_SAE:
                     break
 
-                input_text_COT = build_prompt(sample["instruction"], args.n_shot, True, args.dataset, args.add_instruction)
+                input_text_COT = build_prompt(sample["instruction"], args.n_shot, True, args.dataset, args.add_instruction, args.sae_word)
                 input_text_COT = input_text_COT.strip(" ")
 
 
