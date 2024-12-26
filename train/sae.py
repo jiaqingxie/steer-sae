@@ -34,8 +34,6 @@ transformers.logging.set_verbosity(40)
 ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
 ANSWER_TRIGGER = "The answer is"
-ANSWER_TRIGGER_2 = "kasarigan: "
-ANSWER_TRIGGER_3 = "automáticamente se le da la respuesta de"
 
 def extract_answer_from_output(completion, dataset, sample):
     if dataset in ["gsm8k", "gsm8k_train"] :

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_inference.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_inference.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_inference_cot.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_inference_cot.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -10,8 +10,7 @@
 module load eth_proxy
 export HF_HOME=/cluster/scratch/jiaxie/.cache/huggingface
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
-
-export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/triton_cache
+export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
 
 
 cd /cluster/scratch/jiaxie/
@@ -25,7 +24,7 @@ CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 MODEL_NAME_OR_PATH="google/gemma-2-9b"
 TYPE="inference"
-N_SHOT=0
+N_SHOT=8
 DATASET="svamp"
 
 python -u train/sae.py \
@@ -38,3 +37,4 @@ python -u train/sae.py \
     --dataset ${DATASET} \
     --vllm \
     --bfloat16 \
+    --cot_flag \

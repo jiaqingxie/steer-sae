@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_2b_svamp_inference.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_2b_svamp_inference.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_2b_svamp_inference_cot.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_2b_svamp_inference_cot.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -39,4 +39,5 @@ python -u train/sae.py \
     --n_shot ${N_SHOT}\
     --dataset ${DATASET} \
     --vllm \
+    --cot_flag \
 

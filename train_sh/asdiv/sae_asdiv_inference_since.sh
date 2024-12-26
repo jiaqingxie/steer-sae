@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_gsm8k_inference_cot.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_gsm8k_inference_cot.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_2b_asdiv_inference_since.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_2b_asdiv_inference_since.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -12,19 +12,24 @@ export HF_HOME=/cluster/scratch/jiaxie/.cache/huggingface
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
 
+
 cd /cluster/scratch/jiaxie/
 source sae/bin/activate
 
 cd /cluster/project/sachan/jiaxie/SAE_Math
 
-export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-#Settings
-MODEL_NAME_OR_PATH="google/gemma-2-9b"
+#Settings alphabetically
+CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
-CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b"
-TYPE="inference"
-N_SHOTS=8
 
+
+MODEL_NAME_OR_PATH="google/gemma-2-2b"
+PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
+
+TYPE="inference"
+N_SHOT=0
+DATASET="asdiv"
+SAE_WORD="Since"
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -32,7 +37,7 @@ python -u train/sae.py \
     --cache_dir ${CACHE_DIR} \
     --type ${TYPE} \
     --grid_search \
-    --n_shot ${N_SHOTS} \
+    --n_shot ${N_SHOT}\
+    --dataset ${DATASET} \
     --vllm \
-    --bfloat16 \
-    --cot_flag \
+    --sae_word ${SAE_WORD} \

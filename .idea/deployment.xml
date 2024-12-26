@@ -10,6 +10,7 @@
           </mappings>
           <excludedPaths>
             <excludedPath path="/train_sh/svamp/steer_with_sae/svamp_gemma_2_9b_grid_sv_sae_12946.sh" />
+            <excludedPath path="/train_sh/asdiv/sae_asdiv_inference.sh" />
           </excludedPaths>
         </serverdata>
       </paths>
