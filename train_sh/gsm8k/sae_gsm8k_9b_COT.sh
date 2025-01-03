@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/9b_no_cumulative_no_cot.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/9b_no_cumulative_no_cot.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/9b_cumulative.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/9b_cumulative.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -33,6 +33,7 @@ PARAM_FILE="layer_31/width_16k/average_l0_63/params.npz"
 TRANSFORMER_LENS=True
 DATASET="gsm8k_train"
 NUM_SAE=1000
+N_SHOT=0
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -50,3 +51,5 @@ python -u train/sae.py \
     --dataset ${DATASET} \
     --bfloat16 \
     --NUM_SAE ${NUM_SAE} \
+    --n_shot ${N_SHOT} \
+    --cumulative \

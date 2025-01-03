@@ -126,15 +126,15 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
 def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction, sae_word):
     demo = create_demo_text(n_shot, cot_flag, dataset)
     if dataset in ["aqua"]:
-        input_text_prompt = demo + "Q: Answer Choices: " + input_text + "\n" + "A:"
+        input_text_prompt = demo + "Question: Answer Choices: " + input_text + " \n" + "Answer:"
     else:
         if add_instruction:
             input_text_prompt = demo + "Question: " + input_text + " Please reason step by step.\n" + "Answer:"
         else:
             if sae_word == "":
-                input_text_prompt = demo + "Question: " + input_text + "\nAnswer:"
+                input_text_prompt = demo + "Question: " + input_text + " \nAnswer:"
             else:
-                input_text_prompt = demo + "Question: " + input_text + "\nAnswer: " + sae_word
+                input_text_prompt = demo + "Question: " + input_text + " \nAnswer: " + sae_word
     # print(input_text_prompt)
     return input_text_prompt
 
@@ -201,9 +201,9 @@ def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens, n_device
         torch.set_grad_enabled(False)
         #with torch.no_grad():
         if bfloat16:
-            llm = transformer_lens.HookedTransformer.from_pretrained_no_processing(model_name_or_path, n_devices = n_devices, torch_dtype=torch.bfloat16)
+            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices, torch_dtype=torch.bfloat16)
         else:
-            llm = transformer_lens.HookedTransformer.from_pretrained_no_processing(model_name_or_path, n_devices = n_devices)
+            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices)
     else:
         if bfloat16:
             llm = AutoModelForCausalLM.from_pretrained(model_name_or_path,device_map="auto",torch_dtype=torch.bfloat16, trust_remote_code=True)
@@ -512,7 +512,7 @@ def main():
         if args.vllm:
             sampling_params = SamplingParams(
                 max_tokens=256,
-                temperature=0,
+                temperature=0.05,
                 top_p=1,
                 stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ"],
                 stop_token_ids=(
@@ -524,7 +524,7 @@ def main():
             )
         else:
             if args.steer_vec_sae or args.steer_vec_baseline:
-                sampling_params = dict(top_p=1, temperature=0, freq_penalty=0)
+                sampling_params = dict(top_p=1, temperature=0.05, freq_penalty=0)
             else:
                 sampling_params = dict(top_p=1, temperature=0, max_length=2048, do_sample=True)
 

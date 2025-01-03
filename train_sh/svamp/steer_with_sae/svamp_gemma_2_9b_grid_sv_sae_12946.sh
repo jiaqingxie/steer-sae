@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_0shot_C200_T1_omega1_12946.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_0shot_C200_T1_omega1_12946.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_0shot_C600_T3_omega1_12946.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_svamp_0shot_C600_T3_omega1_12946.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -19,7 +19,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b"
-COEFF=(200)
+COEFF=(600)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 K=10
 LAYER_IDX=31
@@ -32,7 +32,7 @@ SAE_IDX=(12946)
 TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
-T=1
+T=3
 OMEGA=1
 DATASET="svamp"
 

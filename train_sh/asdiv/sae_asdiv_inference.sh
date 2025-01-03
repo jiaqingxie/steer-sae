@@ -27,7 +27,7 @@ MODEL_NAME_OR_PATH="google/gemma-2-2b"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
 
 TYPE="inference"
-N_SHOT=0
+N_SHOT=8
 DATASET="asdiv"
 
 python -u train/sae.py \
