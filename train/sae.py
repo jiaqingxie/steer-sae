@@ -514,7 +514,7 @@ def main():
                 max_tokens=256,
                 temperature=0.05,
                 top_p=1,
-                stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ"],
+                stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ", "Question"],
                 stop_token_ids=(
                     [151645, 151643]
                     if "qwen2" in args.model_name_or_path.lower()
@@ -552,7 +552,10 @@ def main():
                         return
 
                     if steering_on:
+                        if args.devices == 2 and args.steering_type == "mean_act_diff":
+                            resid_pre[:, :, :] = resid_pre[:, :, :].to("cuda:1")
                         tilde_pre = resid_pre[:, :, :] + args.coeff[0] * math.pow(1/ (args.omega * coeff1_dynamic()), args.T) * steering_vector
+
                         resid_pre[:, :, :] = tilde_pre * torch.norm(resid_pre[:, :, :], p=2) / torch.norm(tilde_pre, p=2)
 
 
