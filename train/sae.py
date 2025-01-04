@@ -552,7 +552,7 @@ def main():
                         return
 
                     if steering_on:
-                        if args.devices == 2 and args.steering_type == "mean_act_diff":
+                        if "9b" in args.model_name_or_path and args.steering_type == "mean_act_diff":
                             resid_pre[:, :, :] = resid_pre[:, :, :].to("cuda:1")
                         tilde_pre = resid_pre[:, :, :] + args.coeff[0] * math.pow(1/ (args.omega * coeff1_dynamic()), args.T) * steering_vector
 
