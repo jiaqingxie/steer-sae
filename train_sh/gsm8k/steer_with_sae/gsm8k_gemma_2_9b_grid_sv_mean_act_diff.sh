@@ -5,7 +5,7 @@
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
-#SBATCH --time=12:00:00
+#SBATCH --time=04:00:00
 
 module load eth_proxy
 export HF_HOME=/cluster/scratch/jiaxie/.cache/huggingface
@@ -37,6 +37,7 @@ T=3
 OMEGA=1
 STEERING_TYPE="mean_act_diff"
 steer_vec_base_directory="/cluster/project/sachan/jiaxie/SAE_Math/mean_vec"
+N_DEVICES=2
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -60,3 +61,4 @@ python -u train/sae.py \
     --steering_type ${STEERING_TYPE} \
     --steer_vec_base_directory ${steer_vec_base_directory} \
     --bfloat16 \
+    --devices ${N_DEVICES} \

@@ -38,6 +38,7 @@ OMEGA=1
 STEERING_TYPE="mean_act_diff"
 steer_vec_base_directory="/cluster/project/sachan/jiaxie/SAE_Math/mean_vec"
 DATASET="asdiv"
+N_DEVICES=2
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -62,3 +63,4 @@ python -u train/sae.py \
     --steer_vec_base_directory ${steer_vec_base_directory} \
     --dataset ${DATASET} \
     --bfloat16 \
+    --devices ${N_DEVICES} \
