@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_9b_asdiv_inference_instruction.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_9b_asdiv_inference_instruction.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/sae_2b_asdiv_inference_if.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/sae_2b_asdiv_inference_if.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -18,18 +18,18 @@ source sae/bin/activate
 
 cd /cluster/project/sachan/jiaxie/SAE_Math
 
-export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 #Settings alphabetically
-CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b"
+CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 
 
-MODEL_NAME_OR_PATH="google/gemma-2-9b"
-PARAM_FILE="layer_31/width_16k/average_l0_63/params.npz"
+MODEL_NAME_OR_PATH="google/gemma-2-2b"
+PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
 
 TYPE="inference"
 N_SHOT=0
 DATASET="asdiv"
+SAE_WORD="If"
 
 python -u train/sae.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -40,5 +40,4 @@ python -u train/sae.py \
     --n_shot ${N_SHOT}\
     --dataset ${DATASET} \
     --vllm \
-    --bfloat16 \
-    --add_instruction \
+    --sae_word ${SAE_WORD} \

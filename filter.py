@@ -39,7 +39,7 @@ def evaluate_correction(file_path):
         is_correct_match = re.search(r"Is correct: (True|False)", example)
         model_completion_match = re.search(r"Model Completion: (.+?)(?:Question|Is correct|Num of total question)",
                                            example, re.DOTALL)
-        answers_match = re.search(r"Answers: ([0-9.\-:]+)", example)
+        answers_match = re.search(r"Answers: ([0-9.\-:\/+=*]+)", example)
 
         # Skip if required fields are missing
         if not is_correct_match or not model_completion_match or not answers_match:
@@ -53,44 +53,55 @@ def evaluate_correction(file_path):
             answers = answers_match.group(1).strip()
             model_completion = model_completion_match.group(1).strip()
 
-            # Check if Answers contains a colon ":"
-            if ":" in answers:
-                # Extract numbers before and after the colon in Answers
-                answer_parts = re.findall(r"-?\d+\.?\d*", answers)
-                if len(answer_parts) != 2:
-                    continue  # Skip if there are not exactly two numbers
-                answer_result = float(answer_parts[0]) / float(answer_parts[1])
+            # Define a function to filter valid standalone numbers
+            def extract_standalone_numbers(text):
+                """
+                Extract numbers from text that are not part of a mathematical expression.
+                - Exclude numbers before '='.
+                - Exclude numbers surrounded by '+', '-', '*', '/'.
+                """
+                # Remove anything after '=' (including '=' itself)
+                if '=' in text:
+                    text = text.split('=')[-1]
 
-                # Extract numbers before and after the colon in Model Completion
-                model_parts = re.findall(r"-?\d+\.?\d*", model_completion)
-                if len(model_parts) < 2:
-                    continue  # Skip if there are not enough numbers
-                # print(answer_parts[0])
-                if float(model_parts[-1]) == 0:
-                    # print(model_parts)
-                    continue
-                model_result = float(model_parts[-2]) / float(model_parts[-1])
+                # Find all standalone numbers
+                all_matches = re.finditer(r"(?<![\+\-*/=])\b(-?\d+\.?\d*|[-+]?\d+/[-+]?\d+)\b(?![\+\-*/=])", text)
+                valid_numbers = []
+                for match in all_matches:
+                    number = match.group(1)
+                    if "/" in number:  # Handle fractions
+                        try:
+                            numerator, denominator = map(float, number.split('/'))
+                            if denominator != 0:
+                                valid_numbers.append(numerator / denominator)
+                        except ValueError:
+                            continue
+                    else:
+                        try:
+                            valid_numbers.append(float(number))
+                        except ValueError:
+                            continue
+                return valid_numbers
 
-                # Compare the calculated results
-                if abs(answer_result - model_result) < 1e-6:  # Tolerance for floating-point comparison
-                    corrected += 1
-            else:
-                # Extract all numbers from the model completion
-                numbers = [float(num) for num in re.findall(r"-?\d+\.?\d*", model_completion)]
-                if len(numbers) < 3:
-                    continue  # Skip if there are not enough numbers
+            # Extract valid standalone numbers from model completion
+            valid_numbers = extract_standalone_numbers(model_completion)
 
-                # Get the second-to-last and third-to-last numbers as candidates
-                corrected_candidates = [numbers[-2], numbers[-3]]
+            if len(valid_numbers) < 2:
+                continue  # Skip if fewer than 2 valid numbers
 
-                try:
-                    ground_truth_answer = float(answers)
-                except ValueError:
-                    continue
+            # Get the second-to-last and third-to-last numbers as candidates
+            corrected_candidates = valid_numbers[-2:]  # Take last two valid numbers
 
-                # Check if any of the candidate answers matches the ground truth
-                if ground_truth_answer in corrected_candidates:
-                    corrected += 1
+            try:
+                ground_truth_answer = float(answers)
+            except ValueError:
+                continue
+
+            # Check if any of the candidate answers matches the ground truth
+            if ground_truth_answer in corrected_candidates:
+                corrected += 1
+                # print(example)
+                # print("-----------------------")
 
     correction_percentage = (corrected / false_examples * 100) if false_examples > 0 else 0
     return {
