@@ -16,4 +16,14 @@ pip install transformer_lens sae_lens
 
 ```
 
+Train on: ifeval_wo_instructions.jsonl
+
+Test on: input_data_single_instr.jsonl
+
+Length constraints: Answer using {at most} {K} sentences.
+
+Format constraints: On lowercase / JSON format / Highlight sentences
+
+Dataset: IFEval
+
 

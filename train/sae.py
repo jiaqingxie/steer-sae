@@ -11,8 +11,6 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import vllm
 from vllm import LLM, SamplingParams
 import transformer_lens
-from huggingface_hub import hf_hub_download
-from models.SAE.JumpReLU import JumpReLUSAE
 import gc
 from prompts.prompts import get_examples
 from transformers import  GenerationConfig
