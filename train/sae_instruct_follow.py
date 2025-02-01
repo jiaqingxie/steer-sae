@@ -121,9 +121,10 @@ def create_demo_text(n_shot=8, cot_flag=True, dataset="gsm8k"):
     return demo_text
 
 
-def build_prompt(input_text, n_shot, cot_flag, dataset, add_instruction, sae_word):
-    demo = create_demo_text(n_shot, cot_flag, dataset)
-    if dataset in ["aqua"]:
+def build_prompt(input_text, dataset, add_instruction, sae_word):
+    #
+    if dataset in ["keyword"]:
+
         input_text_prompt = demo + "Question: Answer Choices: " + input_text + " \n" + "Answer:"
     else:
         if add_instruction:
@@ -454,23 +455,19 @@ def main():
     torch.set_grad_enabled(False)
     seed_everything(0)
 
-    test_filepath = os.path.join(args.data_root, args.dataset + "_test.jsonl")
-    if not os.path.exists(test_filepath):
-        download_url(
-            test_url[args.dataset],
-            args.data_root,
-        )
-        os.rename(os.path.join(args.data_root, "test.jsonl"), test_filepath)
+    # load ../input_data_single_instr.jsonl
+    if self.dataset == "instruct_format_length":
+        test_filepath = os.path.join(args.data_root, "input_data_single_instr.jsonl")
+    elif self.dataset == "instruct_keyword_include":
+        test_filepath = os.path.join(args.data_root, "ifeval_single_keyword_include.jsonl")
+    elif self.dataset == "instruct_keyword_exclude":
+        test_filepath = os.path.join(args.data_root, "ifeval_single_keyword_exclude.jsonl")
 
-    list_data_dict = []
-    if len(pair[args.dataset]) > 2:
-        question, body, answer = pair[args.dataset]
-        list_data_dict = load_jsonl(test_filepath, instruction=question, input=body, output=answer)
-    else:
-        question, answer = pair[args.dataset]
-        list_data_dict = load_jsonl(test_filepath, instruction=question, output=answer)
+    # prompt with no instruct, prompt with instruct, key, and type of instruction
+    base, base_with_instruct, id, type = pair[args.dataset]
+    list_data_dict = load_jsonl_instruct(test_filepath, base, base_with_instruct, id, type)
 
-
+    # load model
     model, tokenizer = load(args.model_name_or_path, args.cache_dir, args.vllm, args.transformer_lens, args.devices, args.bfloat16)
 
     if args.type == "sae" or args.steer_vec_sae:
@@ -487,12 +484,8 @@ def main():
                 device="cuda:0"
             )
 
-
-
     cum = []
     cnt = 0
-    top_k_values, top_k_indices = 0, 0
-    # np.random.seed(args.seed)
 
     steering_vec = None
     if args.steer_vec_baseline:
@@ -505,7 +498,7 @@ def main():
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
 
-        input_text = build_prompt(sample["instruction"], args.n_shot, args.cot_flag, args.dataset, args.add_instruction, args.sae_word)
+        input_text = build_prompt(sample["instruction"], args.dataset, args.add_instruction, args.sae_word)
 
         if args.vllm:
             sampling_params = SamplingParams(
@@ -627,7 +620,7 @@ def main():
                 if cnt == args.NUM_SAE:
                     break
 
-                input_text_COT = build_prompt(sample["instruction"], args.n_shot, True, args.dataset, args.add_instruction, args.sae_word)
+                input_text_COT = build_prompt(sample["instruction"], args.dataset, args.add_instruction, args.sae_word)
                 input_text_COT = input_text_COT.strip(" ")
 
 

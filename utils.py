@@ -41,9 +41,12 @@ pair = {
     "svamp": ["Question", "Body", "Answer"],
     "aqua": ["question", "options", "correct"],
     "asdiv": ["question", "body", "answer"],
-    "math": ["problem", "solution"]
-
+    "math": ["problem", "solution"],
+    "instruct":["prompt", "prompt_without_instruction", "key", "instruction_id_list_for_eval"]
 }
+
+
+
 
 
 def download_url(url: str, folder="folder"):
@@ -109,6 +112,30 @@ def load_jsonl(
                 input=item.get(input, None),
                 output=item.get(output, None),
                 category=item.get(category, None),
+            )
+            list_data_dict.append(new_item)
+    return list_data_dict
+
+
+def load_jsonl_instruct(
+    file_path,
+    base="inputs",
+    base_with_instruct="base_with_instruct",
+    id="id",
+    type="type",
+    is_gzip=False,
+):
+
+    list_data_dict = []
+    open_func = open if not is_gzip else gzip.open
+    with open_func(file_path, "r") as f:
+        for line in f:
+            item = json.loads(line)
+            new_item = dict(
+                base=item.get(base, None),
+                base_with_instruct=item.get(base_with_instruct, None),
+                category=item.get(id, None),
+                type=item.get(type, None),
             )
             list_data_dict.append(new_item)
     return list_data_dict
