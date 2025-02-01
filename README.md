@@ -3,8 +3,8 @@
 Training sparse autoencoders on some SOTA math LLMs.
 
 News
-- 10.3.2024 Online
-#SBATCH --gpus=rtx_3090:1
+- 2024.10.3 Online
+- 2025.1.10 Finish Analysis I
 
 
 ```bash
