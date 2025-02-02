@@ -80,7 +80,7 @@ def is_correct(model_answer, answer, dataset, sample):
         return str(gt_answer) == str(model_answer)
 
 def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most):
-    if "json_format" in type or "lowercase" in type or "highlight" in type:
+    if ("json_format" in type) or ("lowercase" in type) or ("highlight" in type):
         return prompt_without_instruct, prompt
     elif "length_constraints" in type:
         if num_sentences == 1:
@@ -94,6 +94,8 @@ def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, mo
             elif most:
                 prompt = prompt_without_instruct + f" Answer using at most {num_sentences} sentences."
         return prompt_without_instruct, prompt
+    else:
+        raise ValueError("this type is not supported")
 
 
 def clean_answer(model_pred, sae, vllm, dataset="gsm8k", steer_vec_sae=False):
@@ -370,6 +372,28 @@ def parse_args():
         action="store_true",
         help="grid searching coefficients for sae"
     )
+    parser.add_argument(
+        "--least",
+        action="store_true",
+        help="length constraint: at least"
+    )
+    parser.add_argument(
+        "--most",
+        action="store_true",
+        help="length constraint: at most"
+    )
+    parser.add_argument(
+        "--num_sentences",
+        type=int,
+        default=1,
+        help="length constraint: {K} sentence(s)"
+    )
+    parser.add_argument(
+        "--instruct_type",
+        type=str,
+        default="length_constraints",
+        help="length constraint: {K} sentence(s)"
+    )
     parser.add_argument("--load", type=str, default=None, help="load quantized model")
 
     args = parser.parse_args()
@@ -456,270 +480,268 @@ def main():
 
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
-        if sample["type"] not in ["detectable_format:json_format"]:
-            pass
-        # print(sample["prompt"])
-        # print(sample["prompt_without_instruct"])
-        input_text = build_prompt(sample["instruction"], args.dataset, args.add_instruction, args.sae_word)
+        if args.instruct_type not in sample["type"][0]:
+            continue
+        prompt_without_instruct, prompt = build_prompt(sample["prompt_without_instruct"],  sample["prompt"],
+                                                       sample["type"][0], args.num_sentences, args.least, args.most)
 
-    #     if args.vllm:
-    #         sampling_params = SamplingParams(
-    #             max_tokens=256,
-    #             temperature=0.05,
-    #             top_p=1,
-    #             stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ", "Question"],
-    #             stop_token_ids=(
-    #                 [151645, 151643]
-    #                 if "qwen2" in args.model_name_or_path.lower()
-    #                 else None
-    #             )
-    #
-    #         )
-    #     else:
-    #         if args.steer_vec_sae or args.steer_vec_baseline:
-    #             sampling_params = dict(top_p=1, temperature=0.05, freq_penalty=0)
-    #         else:
-    #             sampling_params = dict(top_p=1, temperature=0, max_length=2048, do_sample=True)
-    #
-    #     if args.type == "inference":
-    #         if args.steer_vec_sae:
-    #             if args.steering_type == "sae":
-    #                 steering_vector = sae.W_dec[args.sae_idx[0]]
-    #             elif args.steering_type == "mean_act_diff":
-    #                 name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
-    #                 file_name = f"{name}_mean_diff.pt"
-    #                 file_path = os.path.join(args.steer_vec_base_directory, file_name)
-    #                 steering_vector = torch.load(file_path)
-    #
-    #             if args.devices == 2:
-    #                 steering_vector = steering_vector.to("cuda:1")
-    #
-    #             sampling_kwargs = sampling_params
-    #             steering_on = True
-    #             eos_token_id = tokenizer.encode("Question", add_special_tokens=False)[0]
-    #             eos_token_id_2 = tokenizer.encode("<eos>", add_special_tokens=False)[0]
-    #
-    #             def steering_hook(resid_pre, hook, coeff1_dynamic):
-    #                 # print(resid_pre.shape)
-    #                 if resid_pre.shape[1] == 1:
-    #                     return
-    #
-    #                 if steering_on:
-    #                     if "9b" in args.model_name_or_path and args.steering_type == "mean_act_diff":
-    #                         resid_pre[:, :, :] = resid_pre[:, :, :].to("cuda:1")
-    #                     tilde_pre = resid_pre[:, :, :] + args.coeff[0] * math.pow(1/ (args.omega * coeff1_dynamic()), args.T) * steering_vector
-    #
-    #                     resid_pre[:, :, :] = tilde_pre * torch.norm(resid_pre[:, :, :], p=2) / torch.norm(tilde_pre, p=2)
-    #
-    #
-    #             def dynamic_coeff1():
-    #                 dynamic_coeff1.counter += 1
-    #
-    #                 return dynamic_coeff1.counter
-    #
-    #             dynamic_coeff1.counter = 0
-    #             dynamic_hook = partial(steering_hook, coeff1_dynamic=dynamic_coeff1)
-    #
-    #             def hooked_generate(prompt_batch, fwd_hooks=[], seed=None, **kwargs):
-    #                 if seed is not None:
-    #                     torch.manual_seed(seed)
-    #
-    #                 tokenized = model.to_tokens(prompt_batch)
-    #                 generated_tokens = tokenized
-    #
-    #                 for _ in range(kwargs.get('max_new_tokens', 256)):
-    #                     with model.hooks(fwd_hooks=fwd_hooks):
-    #                         result = model.generate(
-    #                             stop_at_eos=True,
-    #                             input=generated_tokens,
-    #                             max_new_tokens=1,
-    #                             do_sample=True,
-    #                             eos_token_id=[eos_token_id, eos_token_id_2],
-    #                             **kwargs,
-    #                             verbose=False,
-    #                         )
-    #
-    #                     new_token = result[:, -1:]
-    #                     generated_tokens = torch.cat([generated_tokens, new_token], dim=1)
-    #
-    #                     if new_token[0].item() in [9413, 235368, 187]:
-    #                         break
-    #
-    #                     if "<eos>" in model.to_string(new_token):
-    #                         break
-    #
-    #                 return generated_tokens
-    #
-    #
-    #             def run_generate(input_text):
-    #                 model.reset_hooks()
-    #                 editing_hooks = [(f"blocks.{args.layer_idx}.hook_resid_post", dynamic_hook)]
-    #                 res = hooked_generate(
-    #                     [input_text], editing_hooks, seed=args.seed, **sampling_kwargs
-    #                 )
-    #
-    #                 # Print results, removing the ugly beginning of sequence token
-    #                 token_len = model.to_tokens(input_text).size(1)
-    #                 answer = model.to_string(res[:, token_len:])
-    #                 answer = "".join(answer)
-    #
-    #                 return answer
-    #             with torch.no_grad():
-    #                 seed_everything(0)
-    #                 dynamic_coeff1.counter = 0
-    #                 model_completion = run_generate(input_text)
-    #             gc.collect()
-    #             torch.cuda.empty_cache()
-    #             if args.dataset == "aqua":
-    #                 model_answer = choice_answer_clean(model_completion, args.vllm)
-    #             elif args.dataset == "math":
-    #                 model_answer = extract_latex_or_number(model_completion,  args.vllm)
-    #                 model_answer = simplify_latex_expression(model_answer)
-    #             else:
-    #                 model_answer = clean_answer(model_completion, True, args.vllm, args.dataset, args.steer_vec_sae)
-    #
-    #         elif args.steer_vec_baseline:
-    #             if cnt == args.NUM_SAE:
-    #                 break
-    #
-    #             input_text_COT = build_prompt(sample["instruction"], args.dataset, args.add_instruction, args.sae_word)
-    #             input_text_COT = input_text_COT.strip(" ")
-    #
-    #
-    #             sampling_kwargs = sampling_params
-    #             eos_token_id = tokenizer.encode("Q", add_special_tokens=False)
-    #
-    #             cache_name = f"blocks.{args.layer_idx}.hook_resid_post"
-    #             _, cache = model.run_with_cache(input_text,
-    #                                             names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post')
-    #             if args.devices == 2:
-    #                 act_original = cache[cache_name].to("cuda:1")
-    #             else:
-    #                 act_original =cache[cache_name]
-    #             _, cache = model.run_with_cache(input_text_COT,
-    #                                             names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post')
-    #             if args.devices == 2:
-    #                 act_cot = cache[cache_name].to("cuda:1")
-    #             else:
-    #                 act_cot = cache[cache_name]
-    #
-    #
-    #             if args.calculate_mean_diff:
-    #                 if cnt:
-    #                     steering_vec += act_cot[:, -1, :] - act_original[:, -1, :]
-    #                 else:
-    #                     steering_vec = act_cot[:, -1, :] - act_original[:, -1, :]
-    #
-    #                 del cache
-    #                 del act_original
-    #                 del act_cot
-    #                 gc.collect()
-    #                 torch.cuda.empty_cache()
-    #             else:
-    #                 continue
-    #         else:
-    #             if not args.vllm:
-    #                 input_text = tokenizer(
-    #                     input_text,
-    #                     padding=False,
-    #                     add_special_tokens=True,
-    #                     return_tensors="pt",
-    #                 ).to("cuda:0")
-    #                 sampling_kwargs = GenerationConfig(**sampling_params)
-    #
-    #
-    #             model_completion = generate(model, tokenizer, input_text, sampling_params, args.vllm)
-    #             output_text = None
-    #             if args.vllm:
-    #                 output_text = model_completion.outputs[0].text
-    #             if args.dataset == "aqua":
-    #                 model_answer = choice_answer_clean(model_completion, args.vllm)
-    #             elif args.dataset == "math":
-    #                 model_answer = extract_latex_or_number(model_completion,  args.vllm)
-    #                 model_answer = simplify_latex_expression(model_answer)
-    #             else:
-    #                 model_answer = clean_answer(model_completion, False, args.vllm, args.dataset, args.steer_vec_sae)
-    #             if args.vllm:
-    #                 model_completion = output_text
-    #         if not args.calculate_mean_diff:
-    #             is_cor = is_correct(model_answer, sample["output"], args.dataset, sample)
-    #             answers.append(is_cor)
-    #             if args.debug:
-    #                 print(f"Full input_text:\n{input_text}\n\n")
-    #             print(
-    #                 f'Question: {sample["instruction"]}\n\n'
-    #                 f'Answers: {extract_answer_from_output(sample["output"], args.dataset, sample)}\n\n'
-    #                 f"Model Answers: {model_answer}\n\n"
-    #                 f"Model Completion: {model_completion}\n\n"
-    #                 f"Is correct: {is_cor}\n\n"
-    #             )
-    #
-    #             print(
-    #                 f"Num of total question: {len(answers)}, "
-    #                 f"Correct num: {sum(answers)}, "
-    #                 f"Accuracy: {float(sum(answers))/len(answers)}."
-    #             )
-    #     elif args.type == "sae":
-    #         if cnt == args.NUM_SAE:
-    #             break
-    #         # print(input_text)
-    #         with torch.no_grad():
-    #             inputs = tokenizer.encode(
-    #                 input_text, return_tensors="pt", add_special_tokens=True
-    #             ).to("cuda")
-    #
-    #             _, cache = model.run_with_cache(
-    #                 inputs,
-    #                 names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post'
-    #             )
-    #
-    #             target_act = cache[f'blocks.{args.layer_idx}.hook_resid_post'].squeeze().detach()
-    #
-    #             target_act = target_act.to("cuda:0")
-    #             sae_acts = sae.encode(target_act.to(torch.float32))
-    #             target_act = target_act.cpu()
-    #             sae_acts = sae_acts.cpu()
-    #
-    #             if args.cumulative:
-    #                 if cnt:
-    #                     cum += sae_acts[-1]
-    #                 else:
-    #                     cum = sae_acts[-1]
-    #                 top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
-    #                 # print(top_k_indices)
-    #             else:
-    #                 top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
-    #                 for ind in top_k_indices:
-    #                     answers[ind.item()] = answers.get(ind.item(), 0) + 1
-    #
-    #
-    #             del cache
-    #             del target_act
-    #             del sae_acts
-    #             gc.collect()
-    #             torch.cuda.empty_cache()
-    #
-    #     cnt += 1
-    #
-    # if args.steer_vec_baseline and args.calculate_mean_diff:
-    #     steering_vec = steering_vec.squeeze()
-    #     steering_vec /= cnt
-    #     name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
-    #     file_name = f"{name}_mean_diff.pt"
-    #     file_path = os.path.join(args.steer_vec_base_directory, file_name)
-    #     if not os.path.exists(args.steer_vec_base_directory):
-    #         os.makedirs(args.steer_vec_base_directory)
-    #     torch.save(steering_vec, file_path)
-    #
-    # if args.cumulative:
-    #     answers = {}
-    #     top_k_values, top_k_indices = torch.topk(cum, cum.size(0))
-    #     for ind, val in zip(top_k_indices, top_k_values):
-    #         answers[ind.item()] = val.item() / args.NUM_SAE
-    #
-    # os.makedirs(args.output_dir, exist_ok=True)
-    # name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
-    #
+
+        if args.vllm:
+            sampling_params = SamplingParams(
+                max_tokens=256,
+                temperature=0.05,
+                top_p=1,
+                stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ", "Question"],
+                stop_token_ids=(
+                    [151645, 151643]
+                    if "qwen2" in args.model_name_or_path.lower()
+                    else None
+                )
+
+            )
+        else:
+            if args.steer_vec_sae or args.steer_vec_baseline:
+                sampling_params = dict(top_p=1, temperature=0.05, freq_penalty=0)
+            else:
+                sampling_params = dict(top_p=1, temperature=0, max_length=2048, do_sample=True)
+
+        if args.type == "inference":
+            if args.steer_vec_sae:
+                if args.steering_type == "sae":
+                    steering_vector = sae.W_dec[args.sae_idx[0]]
+                elif args.steering_type == "mean_act_diff":
+                    name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
+                    file_name = f"{name}_mean_diff.pt"
+                    file_path = os.path.join(args.steer_vec_base_directory, file_name)
+                    steering_vector = torch.load(file_path)
+
+                if args.devices == 2:
+                    steering_vector = steering_vector.to("cuda:1")
+
+                sampling_kwargs = sampling_params
+                steering_on = True
+                eos_token_id = tokenizer.encode("Question", add_special_tokens=False)[0]
+                eos_token_id_2 = tokenizer.encode("<eos>", add_special_tokens=False)[0]
+
+                def steering_hook(resid_pre, hook, coeff1_dynamic):
+                    # print(resid_pre.shape)
+                    if resid_pre.shape[1] == 1:
+                        return
+
+                    if steering_on:
+                        if "9b" in args.model_name_or_path and args.steering_type == "mean_act_diff":
+                            resid_pre[:, :, :] = resid_pre[:, :, :].to("cuda:1")
+                        tilde_pre = resid_pre[:, :, :] + args.coeff[0] * math.pow(1/ (args.omega * coeff1_dynamic()), args.T) * steering_vector
+
+                        resid_pre[:, :, :] = tilde_pre * torch.norm(resid_pre[:, :, :], p=2) / torch.norm(tilde_pre, p=2)
+
+
+                def dynamic_coeff1():
+                    dynamic_coeff1.counter += 1
+
+                    return dynamic_coeff1.counter
+
+                dynamic_coeff1.counter = 0
+                dynamic_hook = partial(steering_hook, coeff1_dynamic=dynamic_coeff1)
+
+                def hooked_generate(prompt_batch, fwd_hooks=[], seed=None, **kwargs):
+                    if seed is not None:
+                        torch.manual_seed(seed)
+
+                    tokenized = model.to_tokens(prompt_batch)
+                    generated_tokens = tokenized
+
+                    for _ in range(kwargs.get('max_new_tokens', 256)):
+                        with model.hooks(fwd_hooks=fwd_hooks):
+                            result = model.generate(
+                                stop_at_eos=True,
+                                input=generated_tokens,
+                                max_new_tokens=1,
+                                do_sample=True,
+                                eos_token_id=[eos_token_id, eos_token_id_2],
+                                **kwargs,
+                                verbose=False,
+                            )
+
+                        new_token = result[:, -1:]
+                        generated_tokens = torch.cat([generated_tokens, new_token], dim=1)
+
+                        if new_token[0].item() in [9413, 235368, 187]:
+                            break
+
+                        if "<eos>" in model.to_string(new_token):
+                            break
+
+                    return generated_tokens
+
+
+                def run_generate(input_text):
+                    model.reset_hooks()
+                    editing_hooks = [(f"blocks.{args.layer_idx}.hook_resid_post", dynamic_hook)]
+                    res = hooked_generate(
+                        [input_text], editing_hooks, seed=args.seed, **sampling_kwargs
+                    )
+
+                    # Print results, removing the ugly beginning of sequence token
+                    token_len = model.to_tokens(input_text).size(1)
+                    answer = model.to_string(res[:, token_len:])
+                    answer = "".join(answer)
+
+                    return answer
+                with torch.no_grad():
+                    seed_everything(0)
+                    dynamic_coeff1.counter = 0
+                    model_completion = run_generate(input_text)
+                gc.collect()
+                torch.cuda.empty_cache()
+                if args.dataset == "aqua":
+                    model_answer = choice_answer_clean(model_completion, args.vllm)
+                elif args.dataset == "math":
+                    model_answer = extract_latex_or_number(model_completion,  args.vllm)
+                    model_answer = simplify_latex_expression(model_answer)
+                else:
+                    model_answer = clean_answer(model_completion, True, args.vllm, args.dataset, args.steer_vec_sae)
+
+            elif args.steer_vec_baseline:
+                if cnt == args.NUM_SAE:
+                    break
+
+                input_text_COT = build_prompt(sample["instruction"], args.dataset, args.add_instruction, args.sae_word)
+                input_text_COT = input_text_COT.strip(" ")
+
+
+                sampling_kwargs = sampling_params
+                eos_token_id = tokenizer.encode("Q", add_special_tokens=False)
+
+                cache_name = f"blocks.{args.layer_idx}.hook_resid_post"
+                _, cache = model.run_with_cache(input_text,
+                                                names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post')
+                if args.devices == 2:
+                    act_original = cache[cache_name].to("cuda:1")
+                else:
+                    act_original =cache[cache_name]
+                _, cache = model.run_with_cache(input_text_COT,
+                                                names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post')
+                if args.devices == 2:
+                    act_cot = cache[cache_name].to("cuda:1")
+                else:
+                    act_cot = cache[cache_name]
+
+
+                if args.calculate_mean_diff:
+                    if cnt:
+                        steering_vec += act_cot[:, -1, :] - act_original[:, -1, :]
+                    else:
+                        steering_vec = act_cot[:, -1, :] - act_original[:, -1, :]
+
+                    del cache
+                    del act_original
+                    del act_cot
+                    gc.collect()
+                    torch.cuda.empty_cache()
+                else:
+                    continue
+            else:
+                input_text = prompt
+                if not args.vllm:
+                    input_text = tokenizer(
+                        input_text,
+                        padding=False,
+                        add_special_tokens=True,
+                        return_tensors="pt",
+                    ).to("cuda:0")
+                    sampling_kwargs = GenerationConfig(**sampling_params)
+
+
+                model_completion = generate(model, tokenizer, input_text, sampling_params, args.vllm)
+                output_text = None
+                if args.vllm:
+                    output_text = model_completion.outputs[0].text
+
+                if args.vllm:
+                    model_completion = output_text
+                print(f"Question: {prompt}")
+                print(f"Answer: {model_completion}")
+
+            # if not args.calculate_mean_diff:
+            #     is_cor = is_correct(model_answer, sample["output"], args.dataset, sample)
+            #     answers.append(is_cor)
+            #     if args.debug:
+            #         print(f"Full input_text:\n{input_text}\n\n")
+            #     print(
+            #         f'Question: {sample["instruction"]}\n\n'
+            #         f'Answers: {extract_answer_from_output(sample["output"], args.dataset, sample)}\n\n'
+            #         f"Model Answers: {model_answer}\n\n"
+            #         f"Model Completion: {model_completion}\n\n"
+            #         f"Is correct: {is_cor}\n\n"
+            #     )
+            #
+            #     print(
+            #         f"Num of total question: {len(answers)}, "
+            #         f"Correct num: {sum(answers)}, "
+            #         f"Accuracy: {float(sum(answers))/len(answers)}."
+            #     )
+        # elif args.type == "sae":
+        #     if cnt == args.NUM_SAE:
+        #         break
+        #     # print(input_text)
+        #     with torch.no_grad():
+        #         inputs = tokenizer.encode(
+        #             input_text, return_tensors="pt", add_special_tokens=True
+        #         ).to("cuda")
+        #
+        #         _, cache = model.run_with_cache(
+        #             inputs,
+        #             names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post'
+        #         )
+        #
+        #         target_act = cache[f'blocks.{args.layer_idx}.hook_resid_post'].squeeze().detach()
+        #
+        #         target_act = target_act.to("cuda:0")
+        #         sae_acts = sae.encode(target_act.to(torch.float32))
+        #         target_act = target_act.cpu()
+        #         sae_acts = sae_acts.cpu()
+        #
+        #         if args.cumulative:
+        #             if cnt:
+        #                 cum += sae_acts[-1]
+        #             else:
+        #                 cum = sae_acts[-1]
+        #             top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
+        #             # print(top_k_indices)
+        #         else:
+        #             top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
+        #             for ind in top_k_indices:
+        #                 answers[ind.item()] = answers.get(ind.item(), 0) + 1
+        #
+        #
+        #         del cache
+        #         del target_act
+        #         del sae_acts
+        #         gc.collect()
+        #         torch.cuda.empty_cache()
+
+        cnt += 1
+
+    if args.steer_vec_baseline and args.calculate_mean_diff:
+        steering_vec = steering_vec.squeeze()
+        steering_vec /= cnt
+        name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
+        file_name = f"{name}_mean_diff.pt"
+        file_path = os.path.join(args.steer_vec_base_directory, file_name)
+        if not os.path.exists(args.steer_vec_base_directory):
+            os.makedirs(args.steer_vec_base_directory)
+        torch.save(steering_vec, file_path)
+
+    if args.cumulative:
+        answers = {}
+        top_k_values, top_k_indices = torch.topk(cum, cum.size(0))
+        for ind, val in zip(top_k_indices, top_k_values):
+            answers[ind.item()] = val.item() / args.NUM_SAE
+
+    os.makedirs(args.output_dir, exist_ok=True)
+    name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
+
     # if args.type == "inference":
     #     if args.steer_vec_sae:
     #         output_path = os.path.join(args.output_dir, args.dataset)
@@ -767,7 +789,7 @@ def main():
     #         with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}.txt"), "w") as f:
     #             for answer in answers:
     #                 print(answer, file=f)
-    #
+
     # elif args.type == "sae":
     #
     #

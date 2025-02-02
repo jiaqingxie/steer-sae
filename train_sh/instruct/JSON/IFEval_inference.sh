@@ -31,6 +31,7 @@ SAE_ID="20-gemmascope-res-16k"
 PARAM_FILE="layer_20/width_16k/average_l0_71/params.npz"
 N_SHOTS=8
 DATASET="instruct_format_length"
+INSTRUCT_TYPE="json_format"
 
 python -u train/sae_instruct_follow.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -46,3 +47,5 @@ python -u train/sae_instruct_follow.py \
     --n_shot ${N_SHOTS} \
     --vllm \
     --dataset ${DATASET} \
+    --least \
+    --instruct_type ${INSTRUCT_TYPE} \
