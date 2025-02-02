@@ -42,7 +42,7 @@ pair = {
     "aqua": ["question", "options", "correct"],
     "asdiv": ["question", "body", "answer"],
     "math": ["problem", "solution"],
-    "instruct":["prompt", "prompt_without_instruction", "key", "instruction_id_list_for_eval"]
+    "instruct_format_length":["prompt", "prompt_without_instruction", "key", "instruction_id_list_for_eval"]
 }
 
 
@@ -119,8 +119,8 @@ def load_jsonl(
 
 def load_jsonl_instruct(
     file_path,
-    base="inputs",
-    base_with_instruct="base_with_instruct",
+    prompt="inputs",
+    prompt_without_instruct="base_without_instruct",
     id="id",
     type="type",
     is_gzip=False,
@@ -132,8 +132,8 @@ def load_jsonl_instruct(
         for line in f:
             item = json.loads(line)
             new_item = dict(
-                base=item.get(base, None),
-                base_with_instruct=item.get(base_with_instruct, None),
+                prompt=item.get(prompt, None),
+                prompt_without_instruct=item.get(prompt_without_instruct, None),
                 category=item.get(id, None),
                 type=item.get(type, None),
             )
