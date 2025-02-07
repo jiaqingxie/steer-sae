@@ -9,6 +9,7 @@ News
 
 ```bash
 python -m venv sae
+source sae/bin/activate
 pip install vllm==0.6.3
 pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https://download.pytorch.org/whl/cu121
 pip install transformers

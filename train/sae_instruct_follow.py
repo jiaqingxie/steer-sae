@@ -79,20 +79,39 @@ def is_correct(model_answer, answer, dataset, sample):
     except (ValueError, TypeError):
         return str(gt_answer) == str(model_answer)
 
-def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most):
+def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most, model_name):
     if ("json_format" in type) or ("lowercase" in type) or ("highlight" in type):
+        if "it" in model_name:
+            prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
+            prompt = "Question: " + prompt + "\nAnswer:"
         return prompt_without_instruct, prompt
     elif "length_constraints" in type:
         if num_sentences == 1:
             if least:
-                prompt = prompt_without_instruct + f" Answer using at least {num_sentences} sentence."
+                if "it" in model_name:
+                    prompt = prompt_without_instruct + f" Answer using at least {num_sentences} sentence."
+                else:
+                    prompt = "Question:" + prompt_without_instruct + f" Answer using at least {num_sentences} sentence.\nAnswer:"
+                    prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
             elif most:
-                prompt = prompt_without_instruct + f" Answer using at most {num_sentences} sentence."
+                if "it" in model_name:
+                    prompt = prompt_without_instruct + f" Answer using at most {num_sentences} sentence."
+                else:
+                    prompt = "Question:" + prompt_without_instruct + f" Answer using at most {num_sentences} sentence.\nAnswer:"
+                    prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
         else:
             if least:
-                prompt = prompt_without_instruct + f" Answer using at least {num_sentences} sentences."
+                if "it" in model_name:
+                    prompt = prompt_without_instruct + f" Answer using at least {num_sentences} sentences."
+                else:
+                    prompt = "Question:" + prompt_without_instruct + f" Answer using at least {num_sentences} sentences.\nAnswer:"
+                    prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
             elif most:
-                prompt = prompt_without_instruct + f" Answer using at most {num_sentences} sentences."
+                if "it" in model_name:
+                    prompt = prompt_without_instruct + f" Answer using at most {num_sentences} sentences."
+                else:
+                    prompt = "Question:" + prompt_without_instruct + f" Answer using at most {num_sentences} sentences.\nAnswer:"
+                    prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
         return prompt_without_instruct, prompt
     else:
         raise ValueError("this type is not supported")
@@ -681,45 +700,46 @@ def main():
             #         f"Correct num: {sum(answers)}, "
             #         f"Accuracy: {float(sum(answers))/len(answers)}."
             #     )
-        # elif args.type == "sae":
-        #     if cnt == args.NUM_SAE:
-        #         break
-        #     # print(input_text)
-        #     with torch.no_grad():
-        #         inputs = tokenizer.encode(
-        #             input_text, return_tensors="pt", add_special_tokens=True
-        #         ).to("cuda")
-        #
-        #         _, cache = model.run_with_cache(
-        #             inputs,
-        #             names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post'
-        #         )
-        #
-        #         target_act = cache[f'blocks.{args.layer_idx}.hook_resid_post'].squeeze().detach()
-        #
-        #         target_act = target_act.to("cuda:0")
-        #         sae_acts = sae.encode(target_act.to(torch.float32))
-        #         target_act = target_act.cpu()
-        #         sae_acts = sae_acts.cpu()
-        #
-        #         if args.cumulative:
-        #             if cnt:
-        #                 cum += sae_acts[-1]
-        #             else:
-        #                 cum = sae_acts[-1]
-        #             top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
-        #             # print(top_k_indices)
-        #         else:
-        #             top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
-        #             for ind in top_k_indices:
-        #                 answers[ind.item()] = answers.get(ind.item(), 0) + 1
-        #
-        #
-        #         del cache
-        #         del target_act
-        #         del sae_acts
-        #         gc.collect()
-        #         torch.cuda.empty_cache()
+        elif args.type == "sae":
+            if cnt == args.NUM_SAE:
+                break
+            input_text = prompt
+            print(input_text)
+            with torch.no_grad():
+                inputs = tokenizer.encode(
+                    input_text, return_tensors="pt", add_special_tokens=True
+                ).to("cuda")
+
+                _, cache = model.run_with_cache(
+                    inputs,
+                    names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post'
+                )
+
+                target_act = cache[f'blocks.{args.layer_idx}.hook_resid_post'].squeeze().detach()
+
+                target_act = target_act.to("cuda:0")
+                sae_acts = sae.encode(target_act.to(torch.float32))
+                target_act = target_act.cpu()
+                sae_acts = sae_acts.cpu()
+
+                if args.cumulative:
+                    if cnt:
+                        cum += sae_acts[-1]
+                    else:
+                        cum = sae_acts[-1]
+                    top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
+                    # print(top_k_indices)
+                else:
+                    top_k_values, top_k_indices = torch.topk(sae_acts[-1], args.K)
+                    for ind in top_k_indices:
+                        answers[ind.item()] = answers.get(ind.item(), 0) + 1
+
+
+                del cache
+                del target_act
+                del sae_acts
+                gc.collect()
+                torch.cuda.empty_cache()
 
         cnt += 1
 
@@ -742,75 +762,75 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
     name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
 
-    # if args.type == "inference":
-    #     if args.steer_vec_sae:
-    #         output_path = os.path.join(args.output_dir, args.dataset)
-    #         output_path = os.path.join(output_path, "steer_vec")
-    #         os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
-    #         with open(os.path.join(output_path, f"scores_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff[0]}.txt"), "w") as f:
-    #             print(
-    #                 f"Num of total question: {len(answers)}, "
-    #                 f"Correct num: {sum(answers)}, "
-    #                 f"Accuracy: {float(sum(answers)) / len(answers)}.",
-    #                 file=f,
-    #             )
-    #         with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff[0]}.txt"), "w") as f:
-    #             for answer in answers:
-    #                 print(answer, file=f)
-    #     elif args.steer_vec_baseline:
-    #         if not args.calculate_mean_diff:
-    #             output_path = os.path.join(args.output_dir, args.dataset)
-    #             output_path = os.path.join(output_path, "steer_vec")
-    #             os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
-    #             with open(
-    #                     os.path.join(output_path, f"scores_{name}_{args.cot_flag}_mean_diff_steering_{args.coeff[0]}.txt"),
-    #                     "w") as f:
-    #                 print(
-    #                     f"Num of total question: {len(answers)}, "
-    #                     f"Correct num: {sum(answers)}, "
-    #                     f"Accuracy: {float(sum(answers)) / len(answers)}.",
-    #                     file=f,
-    #                 )
-    #             with open(
-    #                     os.path.join(output_path, f"results_{name}_{args.cot_flag}_mean_diff_steering_{args.coeff[0]}.txt"),
-    #                     "w") as f:
-    #                 for answer in answers:
-    #                     print(answer, file=f)
-    #     else:
-    #         output_path = os.path.join(args.output_dir, args.dataset)
-    #         os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
-    #         with open(os.path.join(output_path, f"scores_{name}_{args.cot_flag}.txt"), "w") as f:
-    #             print(
-    #                 f"Num of total question: {len(answers)}, "
-    #                 f"Correct num: {sum(answers)}, "
-    #                 f"Accuracy: {float(sum(answers)) / len(answers)}.",
-    #                 file=f,
-    #             )
-    #         with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}.txt"), "w") as f:
-    #             for answer in answers:
-    #                 print(answer, file=f)
+    if args.type == "inference":
+        if args.steer_vec_sae:
+            output_path = os.path.join(args.output_dir, args.dataset)
+            output_path = os.path.join(output_path, "steer_vec")
+            os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
+            with open(os.path.join(output_path, f"scores_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff[0]}.txt"), "w") as f:
+                print(
+                    f"Num of total question: {len(answers)}, "
+                    f"Correct num: {sum(answers)}, "
+                    f"Accuracy: {float(sum(answers)) / len(answers)}.",
+                    file=f,
+                )
+            with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.sae_idx}_{args.coeff[0]}.txt"), "w") as f:
+                for answer in answers:
+                    print(answer, file=f)
+        elif args.steer_vec_baseline:
+            if not args.calculate_mean_diff:
+                output_path = os.path.join(args.output_dir, args.dataset)
+                output_path = os.path.join(output_path, "steer_vec")
+                os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
+                with open(
+                        os.path.join(output_path, f"scores_{name}_{args.cot_flag}_mean_diff_steering_{args.coeff[0]}.txt"),
+                        "w") as f:
+                    print(
+                        f"Num of total question: {len(answers)}, "
+                        f"Correct num: {sum(answers)}, "
+                        f"Accuracy: {float(sum(answers)) / len(answers)}.",
+                        file=f,
+                    )
+                with open(
+                        os.path.join(output_path, f"results_{name}_{args.cot_flag}_mean_diff_steering_{args.coeff[0]}.txt"),
+                        "w") as f:
+                    for answer in answers:
+                        print(answer, file=f)
+        else:
+            output_path = os.path.join(args.output_dir, args.dataset)
+            os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
+            with open(os.path.join(output_path, f"scores_{name}_{args.cot_flag}.txt"), "w") as f:
+                print(
+                    f"Num of total question: {len(answers)}, "
+                    f"Correct num: {sum(answers)}, "
+                    f"Accuracy: {float(sum(answers)) / len(answers)}.",
+                    file=f,
+                )
+            with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}.txt"), "w") as f:
+                for answer in answers:
+                    print(answer, file=f)
 
-    # elif args.type == "sae":
-    #
-    #
-    #     Top_K = TopK(answers, args.K)
-    #     output_path = os.path.join(args.output_dir, args.dataset)
-    #     if args.cumulative:
-    #         output_path= os.path.join(output_path, "cumulative")
-    #     else:
-    #         output_path= os.path.join(output_path, "non-cumulative")
-    #     os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
-    #     with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.K}_{args.layer_idx}.txt"), "w") as f:
-    #         print(f"Top {args.K} SAE features")
-    #         for index, value in Top_K:
-    #             print(
-    #                 f"SAE Index: {index}, Cardinality: {value}, "
-    #                 f"Description: {extract_explanation(index, name, args.sae_id)}",
-    #                 file=f,
-    #             )
-    #     print(f"Cardinality of SAE features: {len(answers)}")
-    #     plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, output_path, args.cumulative)
-    #
+    elif args.type == "sae":
+
+
+        Top_K = TopK(answers, args.K)
+        output_path = os.path.join(args.output_dir, args.dataset)
+        if args.cumulative:
+            output_path= os.path.join(output_path, "cumulative")
+        else:
+            output_path= os.path.join(output_path, "non-cumulative")
+        os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
+        with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.K}_{args.layer_idx}.txt"), "w") as f:
+            print(f"Top {args.K} SAE features")
+            for index, value in Top_K:
+                print(
+                    f"SAE Index: {index}, Cardinality: {value}, "
+                    f"Description: {extract_explanation(index, name, args.sae_id)}",
+                    file=f,
+                )
+        print(f"Cardinality of SAE features: {len(answers)}")
+        plot_SAE_barplot(answers, args.plot_num, args.cot_flag, name, output_path, args.cumulative)
+
 
 
 
