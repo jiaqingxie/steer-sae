@@ -81,7 +81,7 @@ def is_correct(model_answer, answer, dataset, sample):
 
 def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most, model_name):
     if ("json_format" in type) or ("lowercase" in type) or ("highlight" in type):
-        if "it" in model_name:
+        if "it" not in model_name:
             prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
             prompt = "Question: " + prompt + "\nAnswer:"
         return prompt_without_instruct, prompt
@@ -177,7 +177,6 @@ def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens, n_device
             llm = vllm.LLM(model_name_or_path, gpu_memory_utilization = 1, max_model_len=4096, trust_remote_code=True)  # Initialize vLLM
     elif use_transformer_lens:
         torch.set_grad_enabled(False)
-        #with torch.no_grad():
         if bfloat16:
             llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices, torch_dtype=torch.bfloat16)
         else:
@@ -502,12 +501,21 @@ def main():
         if args.instruct_type not in sample["type"][0]:
             continue
         prompt_without_instruct, prompt = build_prompt(sample["prompt_without_instruct"],  sample["prompt"],
-                                                       sample["type"][0], args.num_sentences, args.least, args.most)
+                                                       sample["type"][0], args.num_sentences, args.least, args.most, args.model_name_or_path)
 
+        if "it" in args.model_name_or_path:
+            chat = [
+                {"role": "user", "content": prompt_without_instruct},
+            ]
+            prompt_without_instruct = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
+            chat = [
+                {"role": "user", "content": prompt},
+            ]
+            prompt = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
 
         if args.vllm:
             sampling_params = SamplingParams(
-                max_tokens=256,
+                max_tokens=1024,
                 temperature=0.05,
                 top_p=1,
                 stop = ["</s>", "<|im_end|>", "<|endoftext|>", "\n\nQ", "Question"],
@@ -625,7 +633,7 @@ def main():
                 if cnt == args.NUM_SAE:
                     break
 
-                input_text_COT = build_prompt(sample["instruction"], args.dataset, args.add_instruction, args.sae_word)
+                input_text_COT = build_prompt(sample["instruction"], args.dataset, args.add_instruction, args.sae_word, args.model_name_or_path)
                 input_text_COT = input_text_COT.strip(" ")
 
 
