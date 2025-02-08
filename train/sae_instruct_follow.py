@@ -689,6 +689,8 @@ def main():
                     model_completion = output_text
                 print(f"Question: {prompt}")
                 print(f"Answer: {model_completion}")
+                gc.collect()
+                torch.cuda.empty_cache()
 
             # if not args.calculate_mean_diff:
             #     is_cor = is_correct(model_answer, sample["output"], args.dataset, sample)
@@ -712,7 +714,6 @@ def main():
             if cnt == args.NUM_SAE:
                 break
             input_text = prompt
-            print(input_text)
             with torch.no_grad():
                 inputs = tokenizer.encode(
                     input_text, return_tensors="pt", add_special_tokens=True
