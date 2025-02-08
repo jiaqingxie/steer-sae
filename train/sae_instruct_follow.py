@@ -459,10 +459,8 @@ def main():
     # load ../input_data_single_instr.jsonl
     if args.dataset == "instruct_format_length":
         test_filepath = os.path.join(args.data_root, "input_data_single_instr.jsonl")
-    elif args.dataset == "instruct_keyword_include":
-        test_filepath = os.path.join(args.data_root, "ifeval_single_keyword_include.jsonl")
-    elif args.dataset == "instruct_keyword_exclude":
-        test_filepath = os.path.join(args.data_root, "ifeval_single_keyword_exclude.jsonl")
+    elif args.dataset == "all_base_x_all_instructions_filtered":
+        test_filepath = os.path.join(args.data_root, "all_base_x_all_instructions_filtered.jsonl")
 
     # prompt with no instruct, prompt with instruct, key, and type of instruction
     base, base_without_instruct, id, type = pair[args.dataset]

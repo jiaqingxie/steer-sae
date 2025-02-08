@@ -42,7 +42,8 @@ pair = {
     "aqua": ["question", "options", "correct"],
     "asdiv": ["question", "body", "answer"],
     "math": ["problem", "solution"],
-    "instruct_format_length":["prompt", "prompt_without_instruction", "key", "instruction_id_list_for_eval"]
+    "instruct_format_length":["prompt", "prompt_without_instruction", "key", "instruction_id_list_for_eval"],
+    "all_base_x_all_instructions_filtered":["model_output", "prompt_without_instruction", "icl_key", "single_instruction_id"]
 }
 
 

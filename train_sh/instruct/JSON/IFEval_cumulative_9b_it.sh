@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_9b_it_cumulative.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_9b_it_cumulative.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_9b_it_non_cumulative.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_9b_it_non_cumulative.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -28,8 +28,8 @@ TYPE="sae"
 SAE_FILE="gemma-scope-9b-it-res-canonical"
 SAE_ID="31-gemmascope-res-16k"
 TRANSFORMER_LENS=True
-NUM_SAE=1000
-DATASET="instruct_format_length"
+NUM_SAE=500
+DATASET="all_base_x_all_instructions_filtered"
 INSTRUCT_TYPE="json_format"
 
 python -u train/sae_instruct_follow.py \
@@ -46,3 +46,4 @@ python -u train/sae_instruct_follow.py \
     --dataset ${DATASET} \
     --NUM_SAE ${NUM_SAE} \
     --instruct_type ${INSTRUCT_TYPE} \
+    --bfloat16 \
