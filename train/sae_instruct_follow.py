@@ -496,11 +496,20 @@ def main():
 
     answers = [] if args.type == "inference" else {}
     for sample in tqdm(list_data_dict):
-        if args.instruct_type not in sample["type"][0]:
+        ###### if test, then sample["type"][0], else: sample["type"]
+        if args.dataset == "instruct_format_length":
+            _type = sample["type"][0]
+        else:
+            _type = sample["type"]
+        if args.instruct_type not in _type:
             continue
-        prompt_without_instruct, prompt = build_prompt(sample["prompt_without_instruct"],  sample["prompt"],
-                                                       sample["type"][0], args.num_sentences, args.least, args.most, args.model_name_or_path)
 
+        ####### build prompt
+        prompt_without_instruct, prompt = build_prompt(sample["prompt_without_instruct"], sample["prompt"],
+                                                           _type, args.num_sentences, args.least, args.most,
+                                                           args.model_name_or_path)
+
+        ####### apply chat template to instruction tuned models
         if "it" in args.model_name_or_path:
             chat = [
                 {"role": "user", "content": prompt_without_instruct},
@@ -511,6 +520,7 @@ def main():
             ]
             prompt = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
 
+        ##### set vllm hyper-params
         if args.vllm:
             sampling_params = SamplingParams(
                 max_tokens=1024,
@@ -631,8 +641,8 @@ def main():
                 if cnt == args.NUM_SAE:
                     break
 
-                input_text_COT = build_prompt(sample["instruction"], args.dataset, args.add_instruction, args.sae_word, args.model_name_or_path)
-                input_text_COT = input_text_COT.strip(" ")
+                input_text = prompt_without_instruct.strip(" ")
+                input_text_instruct = prompt.strip(" ")
 
 
                 sampling_kwargs = sampling_params
@@ -645,7 +655,7 @@ def main():
                     act_original = cache[cache_name].to("cuda:1")
                 else:
                     act_original =cache[cache_name]
-                _, cache = model.run_with_cache(input_text_COT,
+                _, cache = model.run_with_cache(input_text_instruct,
                                                 names_filter=lambda name: name == f'blocks.{args.layer_idx}.hook_resid_post')
                 if args.devices == 2:
                     act_cot = cache[cache_name].to("cuda:1")
@@ -754,7 +764,7 @@ def main():
         steering_vec = steering_vec.squeeze()
         steering_vec /= cnt
         name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
-        file_name = f"{name}_mean_diff.pt"
+        file_name = f"{name}_mean_diff_instruct_{args.instruct_type}.pt"
         file_path = os.path.join(args.steer_vec_base_directory, file_name)
         if not os.path.exists(args.steer_vec_base_directory):
             os.makedirs(args.steer_vec_base_directory)
