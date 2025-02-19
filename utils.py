@@ -8,9 +8,11 @@ import gzip
 import json
 import re
 import requests
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
 from matplotlib.patches import Rectangle
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import sympy as sp
@@ -143,6 +145,33 @@ def load_jsonl_instruct(
 
 
 
+def filter_and_split_list(data_list, instruct_type, dataset_type, train_size=0.5, test_size=0.2, valid_size=0.3, random_state=None):
+
+    filtered_list = []
+    for sample in data_list:
+        if dataset_type == "instruct_format_length":
+            _type = sample["type"][0]
+        else:
+            _type = sample["type"]
+        if instruct_type not in _type:
+            continue
+        filtered_list.append(sample)
+
+    print(f"Filtered data size: {len(filtered_list)}")
+
+    # 生成索引
+    indices = np.arange(len(filtered_list))
+
+    # 切分数据集
+    train_idx, temp_idx = train_test_split(indices, test_size=(1 - train_size), random_state=random_state)
+    test_idx, valid_idx = train_test_split(temp_idx, test_size=(valid_size / (test_size + valid_size)), random_state=random_state)
+
+    # 根据索引取数据
+    train_list = [filtered_list[i] for i in train_idx]
+    test_list = [filtered_list[i] for i in test_idx]
+    valid_list = [filtered_list[i] for i in valid_idx]
+
+    return train_list, test_list, valid_list
 
 
 def TopK(a: dict, k: int):

@@ -14,6 +14,13 @@
           </excludedPaths>
         </serverdata>
       </paths>
+      <paths name="cov2">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="deepprotein">
         <serverdata>
           <mappings>

@@ -1,15 +1,16 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_9b_it_non_cumulative.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_9b_it_non_cumulative.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_C1000_T1_omega1_720.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_C1000_T1_omega1_720.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
-#SBATCH --time=3:00:00
+#SBATCH --time=04:00:00
 
 module load eth_proxy
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
 export TRITON_CACHE_DIR=/cluster/scratch/jiaxie/.triton_cache
+
 
 cd /cluster/scratch/jiaxie/
 source sae/bin/activate
@@ -17,21 +18,27 @@ source sae/bin/activate
 cd /cluster/project/sachan/jiaxie/SAE_Math
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
-#Settings
-MODEL_NAME_OR_PATH="google/gemma-2-9b-it"
-DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/instruct_data"
+#Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b-it"
-LAYER_IDX=31
-PLOT_NUM=5
+COEFF=(1000)
+DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/instruct_data"
 K=10
-TYPE="sae"
+LAYER_IDX=31
+MODEL_NAME_OR_PATH="google/gemma-2-9b-it"
+PARAM_FILE="layer_31/width_16k/average_l0_63/params.npz"
+PLOT_NUM=5
 SAE_FILE="gemma-scope-9b-it-res-canonical"
 SAE_ID="31-gemmascope-res-16k"
+SAE_IDX=(720)
 TRANSFORMER_LENS=True
-NUM_SAE=500
+TYPE="inference"
+T=1
+OMEGA=3
 DATASET="all_base_x_all_instructions_filtered"
 INSTRUCT_TYPE="json_format"
-MODE="train"
+N_DEVICES=2
+MODE="valid"
+
 
 python -u train/sae_instruct_follow.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -42,10 +49,17 @@ python -u train/sae_instruct_follow.py \
     --K ${K} \
     --type ${TYPE} \
     --sae_file ${SAE_FILE} \
+    --param_file ${PARAM_FILE} \
     --transformer_lens \
     --sae_id ${SAE_ID} \
-    --dataset ${DATASET} \
-    --NUM_SAE ${NUM_SAE} \
-    --instruct_type ${INSTRUCT_TYPE} \
+    --grid_search \
+    --steer_vec_sae \
+    --sae_idx ${SAE_IDX[@]} \
+    --coeff ${COEFF[@]} \
+    --T ${T} \
     --bfloat16 \
+    --dataset ${DATASET} \
+    --instruct_type ${INSTRUCT_TYPE} \
+    --omega ${OMEGA} \
+    --devices ${N_DEVICES} \
     --mode ${MODE} \

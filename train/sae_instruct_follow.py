@@ -15,17 +15,13 @@ import gc
 from prompts.prompts import get_examples
 from transformers import  GenerationConfig
 from sae_lens import SAE
-
-
 from functools import partial
 import math
-
 from utils import *
 from parser import *
 import argparse
 import numpy as np
-
-
+import json
 
 transformers.logging.set_verbosity(40)
 
@@ -33,57 +29,56 @@ ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
 ANSWER_TRIGGER = "The answer is"
 
-def extract_answer_from_output(completion, dataset, sample):
-    if dataset in ["gsm8k", "gsm8k_train"] :
-        match = ANS_RE.search(completion)
-        if match:
-            match_str = match.group(1).strip()
-            match_str = match_str.replace(",", "")
-            return match_str
-        else:
-            return INVALID_ANS
-    elif dataset in ["svamp", "mawps", "aqua"]:
-        if dataset == "aqua":
-
-            choice = sample["input"] # List A, B, C, D, E
-            for item in choice:
-                if completion in item:
-                    return item
-
-        return completion
-    elif dataset == "asdiv":
-        match = re.match(r'^[^ ]+', completion)
-        if match:
-            match_str = match.group()
-            match_str = match_str.replace(",", "")
-            return match_str
-        else:
-            return completion
-    elif dataset == "math":
-        answer =  extract_answer(completion, dataset)
-        return simplify_latex_expression(answer)
 
 
-def is_correct(model_answer, answer, dataset, sample):
 
-    gt_answer = extract_answer_from_output(answer, dataset, sample)
-    assert gt_answer != INVALID_ANS
 
-    if model_answer == INVALID_ANS:
-        return False
+def contains_valid_json(s: str) -> bool:
+    """
+    判断字符串 s 中是否包含可被 json.loads 成功解析的 JSON 子串。
+    只要找到一段可成功解析的 JSON，就返回 True，否则返回 False。
+    """
+    brackets_map = {'{': '}', '[': ']'}
 
-    try:
-        model_answer_float = float(model_answer)
-        gt_answer_float = float(gt_answer)
-        return model_answer_float == gt_answer_float or abs(model_answer_float - gt_answer_float) <= 1e-1
-    except (ValueError, TypeError):
-        return str(gt_answer) == str(model_answer)
+    length = len(s)
+    for i in range(length):
+        if s[i] in brackets_map:  # 可能是 JSON 的起始符号
+            open_bracket = s[i]
+            close_bracket = brackets_map[open_bracket]
 
-def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most, model_name):
+            # 用一个计数器追踪括号匹配层级
+            level = 1
+            for j in range(i + 1, length):
+                if s[j] == open_bracket:
+                    level += 1
+                elif s[j] == close_bracket:
+                    level -= 1
+
+                # 当level回到0，说明找到了完整的匹配区间
+                if level == 0:
+                    # 取出这段子串
+                    candidate = s[i:j + 1]
+                    # 尝试解析
+                    try:
+                        json.loads(candidate)
+                        return True
+                    except json.JSONDecodeError:
+                        # 解析失败就继续找下一个可能的区间
+                        pass
+                    break  # 同一个起始只尝试匹配到第一个对应结束符，匹配完就跳出
+
+    # 如果所有可能的子串都没成功解析，返回 False
+    return False
+
+def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most, model_name, sae_word):
     if ("json_format" in type) or ("lowercase" in type) or ("highlight" in type):
         if "it" not in model_name:
             prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
             prompt = "Question: " + prompt + "\nAnswer:"
+            #TODO: add sae_words at the end of the input
+            if sae_word != "":
+                prompt += " " + sae_word
+
         return prompt_without_instruct, prompt
     elif "length_constraints" in type:
         if num_sentences == 1:
@@ -126,33 +121,7 @@ def clean_answer(model_pred, sae, vllm, dataset="gsm8k", steer_vec_sae=False):
     else:
         generated_text = model_pred
 
-    generated_text = generated_text.lower().replace(",", "")  # Normalize input and remove commas
-
-    # Find all numbers, fractions, and times in the text
-    pred = re.findall(r"(-?\d+/\d+|-?\d+:\d+|-?\d+\.?\d*|-?\d+)", generated_text)
-
-    if len(pred) == 0:
-        return INVALID_ANS  # No valid matches found
-
-    result = None
-
-    # Process matches in reverse order to prioritize the last valid answer
-    for p in reversed(pred):
-        if ":" in p:  # Time format
-            result = p
-            break
-        elif "/" in p:  # Fraction format, convert to float
-            try:
-                numerator, denominator = map(float, p.split("/"))
-                result = numerator / denominator
-            except ZeroDivisionError:
-                result = INVALID_ANS
-            break
-        else:  # Numeric value (integer or float)
-            result = float(p) if "." in p else int(p)
-            break
-
-    return result
+    return generated_text
 
 
 def seed_everything(seed: int):
@@ -262,6 +231,13 @@ def parse_args():
         default=8,
         help="number of shots"
     )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="test",
+        help="train/valid/test"
+    )
+
     parser.add_argument(
         "--coeff",
         nargs='+',
@@ -466,6 +442,7 @@ def main():
     base, base_without_instruct, id, type = pair[args.dataset]
     list_data_dict = load_jsonl_instruct(test_filepath, base, base_without_instruct, id, type)
 
+
     # load model
     model, tokenizer = load(args.model_name_or_path, args.cache_dir, args.vllm, args.transformer_lens, args.devices, args.bfloat16)
 
@@ -489,12 +466,31 @@ def main():
     steering_vec = None
     if args.steer_vec_baseline:
         name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
-        file_name = f"{name}_mean_diff.pt"
+
+        if "json" in args.instruct_type:
+            file_name = f"{name}_mean_diff_instruct_json_format.pt"
+        else:
+            file_name = f"{name}_mean_diff.pt"
         steering_vec = load_tensor(args.steer_vec_base_directory, file_name)
 
 
 
     answers = [] if args.type == "inference" else {}
+
+
+    train_data_dict, test_data_dict, valid_data_dict = filter_and_split_list(
+                list_data_dict, instruct_type=args.instruct_type, dataset_type=args.dataset, random_state=args.seed)
+
+
+    if args.mode == "train":
+        list_data_dict = train_data_dict
+    elif args.mode == "test":
+        list_data_dict = test_data_dict
+    elif args.mode == "valid":
+        list_data_dict = valid_data_dict
+    else:
+        raise ValueError("Mode should be 'train' or 'test' or 'valid'.")
+
     for sample in tqdm(list_data_dict):
         ###### if test, then sample["type"][0], else: sample["type"]
         if args.dataset == "instruct_format_length":
@@ -507,7 +503,7 @@ def main():
         ####### build prompt
         prompt_without_instruct, prompt = build_prompt(sample["prompt_without_instruct"], sample["prompt"],
                                                            _type, args.num_sentences, args.least, args.most,
-                                                           args.model_name_or_path)
+                                                           args.model_name_or_path, args.sae_word)
 
         ####### apply chat template to instruction tuned models
         if "it" in args.model_name_or_path:
@@ -541,6 +537,7 @@ def main():
                 sampling_params = dict(top_p=1, temperature=0, max_length=2048, do_sample=True)
 
         if args.type == "inference":
+            input_text = prompt_without_instruct.strip(" ")
             if args.steer_vec_sae:
                 if args.steering_type == "sae":
                     steering_vector = sae.W_dec[args.sae_idx[0]]
@@ -586,7 +583,7 @@ def main():
                     tokenized = model.to_tokens(prompt_batch)
                     generated_tokens = tokenized
 
-                    for _ in range(kwargs.get('max_new_tokens', 256)):
+                    for _ in range(kwargs.get('max_new_tokens', 1024)):
                         with model.hooks(fwd_hooks=fwd_hooks):
                             result = model.generate(
                                 stop_at_eos=True,
@@ -629,13 +626,7 @@ def main():
                     model_completion = run_generate(input_text)
                 gc.collect()
                 torch.cuda.empty_cache()
-                if args.dataset == "aqua":
-                    model_answer = choice_answer_clean(model_completion, args.vllm)
-                elif args.dataset == "math":
-                    model_answer = extract_latex_or_number(model_completion,  args.vllm)
-                    model_answer = simplify_latex_expression(model_answer)
-                else:
-                    model_answer = clean_answer(model_completion, True, args.vllm, args.dataset, args.steer_vec_sae)
+                model_answer = clean_answer(model_completion, True, args.vllm, args.dataset, args.steer_vec_sae)
 
             elif args.steer_vec_baseline:
                 if cnt == args.NUM_SAE:
@@ -677,7 +668,7 @@ def main():
                 else:
                     continue
             else:
-                input_text = prompt
+                input_text = prompt_without_instruct.strip(" ")
                 if not args.vllm:
                     input_text = tokenizer(
                         input_text,
@@ -697,27 +688,28 @@ def main():
                     model_completion = output_text
                 print(f"Question: {prompt}")
                 print(f"Answer: {model_completion}")
+                model_answer = model_completion
                 gc.collect()
                 torch.cuda.empty_cache()
 
-            # if not args.calculate_mean_diff:
-            #     is_cor = is_correct(model_answer, sample["output"], args.dataset, sample)
-            #     answers.append(is_cor)
-            #     if args.debug:
-            #         print(f"Full input_text:\n{input_text}\n\n")
-            #     print(
-            #         f'Question: {sample["instruction"]}\n\n'
-            #         f'Answers: {extract_answer_from_output(sample["output"], args.dataset, sample)}\n\n'
-            #         f"Model Answers: {model_answer}\n\n"
-            #         f"Model Completion: {model_completion}\n\n"
-            #         f"Is correct: {is_cor}\n\n"
-            #     )
-            #
-            #     print(
-            #         f"Num of total question: {len(answers)}, "
-            #         f"Correct num: {sum(answers)}, "
-            #         f"Accuracy: {float(sum(answers))/len(answers)}."
-            #     )
+            if not args.calculate_mean_diff:
+                if "json" in args.instruct_type:
+                    is_cor = contains_valid_json(model_answer)
+                    answers.append(is_cor)
+                if args.debug:
+                    print(f"Full input_text:\n{input_text}\n\n")
+                print(
+                    f'Question: {sample["prompt_without_instruct"]}\n\n'
+                    f"Model Answers: {model_answer}\n\n"
+                    f"Model Completion: {model_completion}\n\n"
+                    f"Is correct: {is_cor}\n\n"
+                )
+
+                print(
+                    f"Num of total question: {len(answers)}, "
+                    f"Correct num: {sum(answers)}, "
+                    f"Accuracy: {float(sum(answers))/len(answers)}."
+                )
         elif args.type == "sae":
             if cnt == args.NUM_SAE:
                 break

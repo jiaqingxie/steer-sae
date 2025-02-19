@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_2b_non_cumulative.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_2b_non_cumulative.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_bra.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_bra.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
-#SBATCH --gpus=rtx_3090:1
+#SBATCH --gpus=rtx_3090:2
 #SBATCH --time=3:00:00
 
 module load eth_proxy
@@ -16,21 +16,22 @@ source sae/bin/activate
 
 cd /cluster/project/sachan/jiaxie/SAE_Math
 
+
 #Settings
-MODEL_NAME_OR_PATH="google/gemma-2-2b"
+MODEL_NAME_OR_PATH="google/gemma-2-9b-it"
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/instruct_data"
-CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-LAYER_IDX=20
+CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b-it"
+LAYER_IDX=31
 PLOT_NUM=5
 K=10
-TYPE="sae"
-SAE_FILE="gemma-scope-2b-pt-res-canonical"
-SAE_ID="20-gemmascope-res-16k"
-TRANSFORMER_LENS=True
-NUM_SAE=1000
-DATASET="instruct_format_length"
+TYPE="inference"
+SAE_FILE="gemma-scope-9b-it-res-canonical"
+SAE_ID="31-gemmascope-res-16k"
+PARAM_FILE="layer_31/width_16k/average_l0_71/params.npz"
+DATASET="all_base_x_all_instructions_filtered"
 INSTRUCT_TYPE="json_format"
-MODE="train"
+SAE_WORD="{"
+MODE="test"
 
 python -u train/sae_instruct_follow.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -41,9 +42,10 @@ python -u train/sae_instruct_follow.py \
     --K ${K} \
     --type ${TYPE} \
     --sae_file ${SAE_FILE} \
-    --transformer_lens \
     --sae_id ${SAE_ID} \
+    --vllm \
     --dataset ${DATASET} \
-    --NUM_SAE ${NUM_SAE} \
     --instruct_type ${INSTRUCT_TYPE} \
+    --bfloat16 \
+    --sae_word ${SAE_WORD} \
     --mode ${MODE} \
