@@ -4,8 +4,8 @@
 #SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_C1000_T3_omega1_5340.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
-#SBATCH --gpus=rtx_3090:2
-#SBATCH --time=04:00:00
+#SBATCH --gpus=rtx_3090:1
+#SBATCH --time=02:00:00
 
 module load eth_proxy
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
@@ -36,8 +36,8 @@ T=3
 OMEGA=1
 DATASET="all_base_x_all_instructions_filtered"
 INSTRUCT_TYPE="json_format"
-N_DEVICES=2
-MODE="valid"
+N_DEVICES=1
+MODE="test"
 
 
 python -u train/sae_instruct_follow.py \

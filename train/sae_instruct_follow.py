@@ -34,10 +34,7 @@ ANSWER_TRIGGER = "The answer is"
 
 
 def contains_valid_json(s: str) -> bool:
-    """
-    判断字符串 s 中是否包含可被 json.loads 成功解析的 JSON 子串。
-    只要找到一段可成功解析的 JSON，就返回 True，否则返回 False。
-    """
+
     brackets_map = {'{': '}', '[': ']'}
 
     length = len(s)
@@ -46,7 +43,6 @@ def contains_valid_json(s: str) -> bool:
             open_bracket = s[i]
             close_bracket = brackets_map[open_bracket]
 
-            # 用一个计数器追踪括号匹配层级
             level = 1
             for j in range(i + 1, length):
                 if s[j] == open_bracket:
@@ -147,7 +143,7 @@ def load(model_name_or_path, cache_dir, use_vllm, use_transformer_lens, n_device
     elif use_transformer_lens:
         torch.set_grad_enabled(False)
         if bfloat16:
-            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices, torch_dtype=torch.bfloat16)
+            llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices, torch_dtype=torch.float16)
         else:
             llm = transformer_lens.HookedTransformer.from_pretrained(model_name_or_path, n_devices = n_devices)
     else:
