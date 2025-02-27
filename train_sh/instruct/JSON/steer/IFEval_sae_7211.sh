@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_C15_T3_omega1_mean.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_C15_T3_omega1_mean.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_C1000_T3_omega1_7211.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_C1000_T3_omega1_7211.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -20,7 +20,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-9b-it"
-COEFF=(15)
+COEFF=(1000)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/instruct_data"
 K=10
 LAYER_IDX=31
@@ -29,17 +29,16 @@ PARAM_FILE="layer_31/width_16k/average_l0_63/params.npz"
 PLOT_NUM=5
 SAE_FILE="gemma-scope-9b-it-res-canonical"
 SAE_ID="31-gemmascope-res-16k"
-SAE_IDX=(720)
+SAE_IDX=(7211)
 TRANSFORMER_LENS=True
 TYPE="inference"
 T=3
 OMEGA=1
-INSTRUCT_TYPE="json_format"
 DATASET="all_base_x_all_instructions_filtered"
-STEERING_TYPE="mean_act_diff"
-steer_vec_base_directory="/cluster/project/sachan/jiaxie/SAE_Math/mean_vec"
+INSTRUCT_TYPE="json_format"
 N_DEVICES=2
 MODE="test"
+
 
 python -u train/sae_instruct_follow.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -55,8 +54,6 @@ python -u train/sae_instruct_follow.py \
     --sae_id ${SAE_ID} \
     --grid_search \
     --steer_vec_sae \
-    --steering_type ${STEERING_TYPE} \
-    --steer_vec_base_directory ${steer_vec_base_directory} \
     --sae_idx ${SAE_IDX[@]} \
     --coeff ${COEFF[@]} \
     --T ${T} \

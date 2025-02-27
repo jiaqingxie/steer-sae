@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_with_instruct.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_with_instruct.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_JSON.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_JSON.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
-#SBATCH --time=04:00:00
+#SBATCH --time=3:00:00
 
 module load eth_proxy
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
@@ -30,6 +30,7 @@ SAE_ID="31-gemmascope-res-16k"
 PARAM_FILE="layer_31/width_16k/average_l0_71/params.npz"
 DATASET="all_base_x_all_instructions_filtered"
 INSTRUCT_TYPE="json_format"
+SAE_WORD="JSON"
 MODE="test"
 
 python -u train/sae_instruct_follow.py \
@@ -44,6 +45,7 @@ python -u train/sae_instruct_follow.py \
     --sae_id ${SAE_ID} \
     --vllm \
     --dataset ${DATASET} \
-    --least \
     --instruct_type ${INSTRUCT_TYPE} \
+    --bfloat16 \
+    --sae_word ${SAE_WORD} \
     --mode ${MODE} \

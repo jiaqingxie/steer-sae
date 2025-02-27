@@ -34,37 +34,7 @@ ANSWER_TRIGGER = "The answer is"
 
 
 def contains_valid_json(s: str) -> bool:
-
-    brackets_map = {'{': '}', '[': ']'}
-
-    length = len(s)
-    for i in range(length):
-        if s[i] in brackets_map:  # 可能是 JSON 的起始符号
-            open_bracket = s[i]
-            close_bracket = brackets_map[open_bracket]
-
-            level = 1
-            for j in range(i + 1, length):
-                if s[j] == open_bracket:
-                    level += 1
-                elif s[j] == close_bracket:
-                    level -= 1
-
-                # 当level回到0，说明找到了完整的匹配区间
-                if level == 0:
-                    # 取出这段子串
-                    candidate = s[i:j + 1]
-                    # 尝试解析
-                    try:
-                        json.loads(candidate)
-                        return True
-                    except json.JSONDecodeError:
-                        # 解析失败就继续找下一个可能的区间
-                        pass
-                    break  # 同一个起始只尝试匹配到第一个对应结束符，匹配完就跳出
-
-    # 如果所有可能的子串都没成功解析，返回 False
-    return False
+    return bool(re.search(r'\{.*?\}|\[.*?\]', s, re.DOTALL))
 
 def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most, model_name, sae_word):
     if ("json_format" in type) or ("lowercase" in type) or ("highlight" in type):
@@ -73,8 +43,8 @@ def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, mo
             prompt = "Question: " + prompt + "\nAnswer:"
             #TODO: add sae_words at the end of the input
             if sae_word != "":
+                prompt_without_instruct += " " + sae_word
                 prompt += " " + sae_word
-
         return prompt_without_instruct, prompt
     elif "length_constraints" in type:
         if num_sentences == 1:
@@ -539,7 +509,7 @@ def main():
                     steering_vector = sae.W_dec[args.sae_idx[0]]
                 elif args.steering_type == "mean_act_diff":
                     name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
-                    file_name = f"{name}_mean_diff.pt"
+                    file_name = f"{name}_mean_diff_all_base_x_all_instructions_filtered.pt"
                     file_path = os.path.join(args.steer_vec_base_directory, file_name)
                     steering_vector = torch.load(file_path)
 

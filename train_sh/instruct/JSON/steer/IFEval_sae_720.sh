@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_C1000_T1_omega1_720.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_C1000_T1_omega1_720.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_C1000_T3_omega1_720.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_C1000_T3_omega1_720.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -32,12 +32,12 @@ SAE_ID="31-gemmascope-res-16k"
 SAE_IDX=(720)
 TRANSFORMER_LENS=True
 TYPE="inference"
-T=1
-OMEGA=3
+T=3
+OMEGA=1
 DATASET="all_base_x_all_instructions_filtered"
 INSTRUCT_TYPE="json_format"
 N_DEVICES=2
-MODE="valid"
+MODE="test"
 
 
 python -u train/sae_instruct_follow.py \

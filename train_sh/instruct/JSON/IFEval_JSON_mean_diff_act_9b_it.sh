@@ -34,6 +34,7 @@ DATASET="all_base_x_all_instructions_filtered"
 steer_vec_base_directory="/cluster/project/sachan/jiaxie/SAE_Math/mean_vec"
 NUM_SAE=500
 INSTRUCT_TYPE="json_format"
+MODE="train"
 
 python -u train/sae_instruct_follow.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -52,3 +53,4 @@ python -u train/sae_instruct_follow.py \
     --devices ${N_DEVICES} \
     --bfloat16 \
     --instruct_type ${INSTRUCT_TYPE} \
+    --mode ${MODE} \
