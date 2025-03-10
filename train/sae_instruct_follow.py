@@ -22,6 +22,8 @@ from parser import *
 import argparse
 import numpy as np
 import json
+from langdetect import detect
+
 
 transformers.logging.set_verbosity(40)
 
@@ -31,20 +33,22 @@ ANSWER_TRIGGER = "The answer is"
 
 
 
-
-
 def contains_valid_json(s: str) -> bool:
     return bool(re.search(r'\{.*?\}|\[.*?\]', s, re.DOTALL))
 
-def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most, model_name, sae_word):
-    if ("json_format" in type) or ("lowercase" in type) or ("highlight" in type):
+def is_all_lowercase(s: str) -> bool:
+    s = s.replace("<end_of_turn>", "").replace("<eos>", "")
+    return all(char.islower() or not char.isalpha() for char in s)
+
+def is_all_uppercase(s: str) -> bool:
+    s = s.replace("<end_of_turn>", "").replace("<eos>", "")
+    return all(char.isupper() or not char.isalpha() for char in s)
+
+def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most, model_name):
+    if ("json_format" in type) or ("lowercase" in type) or ("english" in type) or ("english_capital" in type) or ("response_language" in type):
         if "it" not in model_name:
             prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
             prompt = "Question: " + prompt + "\nAnswer:"
-            #TODO: add sae_words at the end of the input
-            if sae_word != "":
-                prompt_without_instruct += " " + sae_word
-                prompt += " " + sae_word
         return prompt_without_instruct, prompt
     elif "length_constraints" in type:
         if num_sentences == 1:
@@ -435,6 +439,10 @@ def main():
 
         if "json" in args.instruct_type:
             file_name = f"{name}_mean_diff_instruct_json_format.pt"
+        elif "lowercase" in args.instruct_type:
+            file_name = f"{name}_mean_diff_instruct_lowercase.pt"
+        elif "capital" in args.instruct_type:
+            file_name = f"{name}_mean_diff_instruct_english_capital.pt"
         else:
             file_name = f"{name}_mean_diff.pt"
         steering_vec = load_tensor(args.steer_vec_base_directory, file_name)
@@ -469,7 +477,8 @@ def main():
         ####### build prompt
         prompt_without_instruct, prompt = build_prompt(sample["prompt_without_instruct"], sample["prompt"],
                                                            _type, args.num_sentences, args.least, args.most,
-                                                           args.model_name_or_path, args.sae_word)
+                                                           args.model_name_or_path)
+
 
         ####### apply chat template to instruction tuned models
         if "it" in args.model_name_or_path:
@@ -481,6 +490,10 @@ def main():
                 {"role": "user", "content": prompt},
             ]
             prompt = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
+
+        if args.sae_word != "":
+            prompt_without_instruct += " " + args.sae_word
+            prompt += " " + args.sae_word
 
         ##### set vllm hyper-params
         if args.vllm:
@@ -509,17 +522,19 @@ def main():
                     steering_vector = sae.W_dec[args.sae_idx[0]]
                 elif args.steering_type == "mean_act_diff":
                     name = args.model_name_or_path.split('/')[1] if '/' in args.model_name_or_path else None
-                    file_name = f"{name}_mean_diff_all_base_x_all_instructions_filtered.pt"
+                    file_name = f"{name}_mean_diff_instruct_{args.instruct_type}.pt"
                     file_path = os.path.join(args.steer_vec_base_directory, file_name)
-                    steering_vector = torch.load(file_path)
-
+                    steering_vector = torch.load(file_path, map_location="cuda", weights_only=True)
                 if args.devices == 2:
+                    steering_vector = steering_vector.to(dtype=torch.float32)
                     steering_vector = steering_vector.to("cuda:1")
+                    # print(steering_vector)
 
                 sampling_kwargs = sampling_params
                 steering_on = True
                 eos_token_id = tokenizer.encode("Question", add_special_tokens=False)[0]
                 eos_token_id_2 = tokenizer.encode("<eos>", add_special_tokens=False)[0]
+                eos_token_id_3 = tokenizer.encode("<end_of_turn>", add_special_tokens=False)[0]
 
                 def steering_hook(resid_pre, hook, coeff1_dynamic):
                     # print(resid_pre.shape)
@@ -586,10 +601,14 @@ def main():
                     answer = "".join(answer)
 
                     return answer
-                with torch.no_grad():
-                    seed_everything(0)
-                    dynamic_coeff1.counter = 0
-                    model_completion = run_generate(input_text)
+                try:
+                    with torch.no_grad():
+                        seed_everything(0)
+                        dynamic_coeff1.counter = 0
+                        model_completion = run_generate(input_text)
+                except:
+                    print("incorrect")
+                    continue
                 gc.collect()
                 torch.cuda.empty_cache()
                 model_answer = clean_answer(model_completion, True, args.vllm, args.dataset, args.steer_vec_sae)
@@ -634,7 +653,10 @@ def main():
                 else:
                     continue
             else:
-                input_text = prompt_without_instruct.strip(" ")
+                if args.cot_flag:
+                    input_text = prompt.strip(" ")
+                else:
+                    input_text = prompt_without_instruct.strip(" ")
                 if not args.vllm:
                     input_text = tokenizer(
                         input_text,
@@ -662,6 +684,12 @@ def main():
                 if "json" in args.instruct_type:
                     is_cor = contains_valid_json(model_answer)
                     answers.append(is_cor)
+                elif "lowercase" in args.instruct_type:
+                    is_cor = is_all_lowercase(model_answer)
+                    answers.append(is_cor)
+                elif "capital" in args.instruct_type:
+                    is_cor = is_all_uppercase(model_answer)
+                    answers.append(is_cor)
                 if args.debug:
                     print(f"Full input_text:\n{input_text}\n\n")
                 print(
@@ -679,7 +707,10 @@ def main():
         elif args.type == "sae":
             if cnt == args.NUM_SAE:
                 break
-            input_text = prompt
+            if args.cot_flag: # with instruction
+                input_text = prompt
+            else:
+                input_text = prompt_without_instruct
             with torch.no_grad():
                 inputs = tokenizer.encode(
                     input_text, return_tensors="pt", add_special_tokens=True
@@ -791,9 +822,9 @@ def main():
         Top_K = TopK(answers, args.K)
         output_path = os.path.join(args.output_dir, args.dataset)
         if args.cumulative:
-            output_path= os.path.join(output_path, "cumulative")
+            output_path= os.path.join(output_path, args.instruct_type, "cumulative")
         else:
-            output_path= os.path.join(output_path, "non-cumulative")
+            output_path= os.path.join(output_path, args.instruct_type, "non-cumulative")
         os.makedirs(output_path, exist_ok=True)  # Ensure the directory exists
         with open(os.path.join(output_path, f"results_{name}_{args.cot_flag}_{args.K}_{args.layer_idx}.txt"), "w") as f:
             print(f"Top {args.K} SAE features")
