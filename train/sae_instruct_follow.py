@@ -18,11 +18,11 @@ from sae_lens import SAE
 from functools import partial
 import math
 from utils import *
-from parser import *
 import argparse
 import numpy as np
 import json
 from langdetect import detect
+import nltk
 
 
 transformers.logging.set_verbosity(40)
@@ -31,7 +31,15 @@ ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
 ANSWER_TRIGGER = "The answer is"
 
+def _get_sentence_tokenizer():
+  return nltk.data.load("nltk:tokenizers/punkt/english.pickle")
 
+
+def count_sentences(text):
+  """Count the number of sentences."""
+  tokenizer = _get_sentence_tokenizer()
+  tokenized_sentences = tokenizer.tokenize(text)
+  return len(tokenized_sentences)
 
 def contains_valid_json(s: str) -> bool:
     return bool(re.search(r'\{.*?\}|\[.*?\]', s, re.DOTALL))
@@ -44,44 +52,58 @@ def is_all_uppercase(s: str) -> bool:
     s = s.replace("<end_of_turn>", "").replace("<eos>", "")
     return all(char.isupper() or not char.isalpha() for char in s)
 
+def num_sentences_at_least(s, value):
+    length = count_sentences(s)
+    if length >= value:
+        return True
+    else:
+        return False
+
+def num_sentences_at_most(s, value):
+    length = count_sentences(s)
+    if length <= value:
+        return True
+    else:
+        return False
 def correct_language(s, instruct_type):
-    groundtruth_lang = instruct_type[-1:]
-    detected_lang = detect(s)
+    groundtruth_lang = instruct_type[-2:]
+
+    if "de" not in instruct_type and "it" not in instruct_type:
+        filtered_s = re.sub(r'[a-zA-Z.,!?;:(){}\[\]"\'\-]', '', s)
+    else:
+        filtered_s = s
+    if not filtered_s.strip():
+        return False
+    try:
+        detected_lang = detect(filtered_s)
+    except:
+        return False
     return groundtruth_lang == detected_lang
 
-def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most, model_name):
-    if ("json_format" in type) or ("lowercase" in type) or ("english" in type) or ("english_capital" in type) or ("response_language" in type):
+def build_prompt(prompt_without_instruct, prompt, type, least, most, model_name, inference, calculate_mean_diff, steer_vec_sae):
+    if ("json_format" in type) or ("lowercase" in type) or ("english_capital" in type) or ("response_language" in type):
         if "it" not in model_name:
             prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
             prompt = "Question: " + prompt + "\nAnswer:"
         return prompt_without_instruct, prompt
-    elif "length_constraints" in type:
-        if num_sentences == 1:
-            if least:
-                if "it" in model_name:
-                    prompt = prompt_without_instruct + f" Answer using at least {num_sentences} sentence."
-                else:
-                    prompt = "Question:" + prompt_without_instruct + f" Answer using at least {num_sentences} sentence.\nAnswer:"
-                    prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
-            elif most:
-                if "it" in model_name:
-                    prompt = prompt_without_instruct + f" Answer using at most {num_sentences} sentence."
-                else:
-                    prompt = "Question:" + prompt_without_instruct + f" Answer using at most {num_sentences} sentence.\nAnswer:"
-                    prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
-        else:
-            if least:
-                if "it" in model_name:
-                    prompt = prompt_without_instruct + f" Answer using at least {num_sentences} sentences."
-                else:
-                    prompt = "Question:" + prompt_without_instruct + f" Answer using at least {num_sentences} sentences.\nAnswer:"
-                    prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
-            elif most:
-                if "it" in model_name:
-                    prompt = prompt_without_instruct + f" Answer using at most {num_sentences} sentences."
-                else:
-                    prompt = "Question:" + prompt_without_instruct + f" Answer using at most {num_sentences} sentences.\nAnswer:"
-                    prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
+    elif "number_sentences" in type:
+        if least:
+            if inference == "inference":
+                if calculate_mean_diff: # case 1: calculate mean activation difference
+                    prompt = prompt_without_instruct + " The answer should be long."
+                elif steer_vec_sae: # case 2: steering the model with sae vector or meanactdiff
+                    prompt_without_instruct = prompt
+            elif inference == "sae":
+                prompt = prompt_without_instruct + " The answer should be long."
+        elif most:
+            if inference == "inference":
+                if calculate_mean_diff:  # case 1: calculate mean activation difference
+                    prompt = prompt_without_instruct + " The answer should be short."
+                elif steer_vec_sae:  # case 2: steering the model with sae vector or meanactdiff
+                    prompt_without_instruct = prompt
+            elif inference == "sae":
+                prompt = prompt_without_instruct + " The answer should be short."
+
         return prompt_without_instruct, prompt
     else:
         raise ValueError("this type is not supported")
@@ -327,6 +349,16 @@ def parse_args():
         help="use cumulative sae features or not"
     )
     parser.add_argument(
+        "--least",
+        action="store_true",
+        help="length constraint: at least"
+    )
+    parser.add_argument(
+        "--most",
+        action="store_true",
+        help="length constraint: at most"
+    )
+    parser.add_argument(
         "--steer_vec_sae",
         action="store_true",
         help="use sae (or mean_act_diff) vectors as steering vectors"
@@ -341,16 +373,7 @@ def parse_args():
         action="store_true",
         help="grid searching coefficients for sae"
     )
-    parser.add_argument(
-        "--least",
-        action="store_true",
-        help="length constraint: at least"
-    )
-    parser.add_argument(
-        "--most",
-        action="store_true",
-        help="length constraint: at most"
-    )
+
     parser.add_argument(
         "--num_sentences",
         type=int,
@@ -363,6 +386,28 @@ def parse_args():
         default="length_constraints",
         help="length constraint: {K} sentence(s)"
     )
+
+    parser.add_argument(
+        "--train_size",
+        type=float,
+        default="0.5",
+        help="ratio of training data size"
+    )
+
+    parser.add_argument(
+        "--valid_size",
+        type=float,
+        default="0.3",
+        help="ratio of validation data size"
+    )
+
+    parser.add_argument(
+        "--test_size",
+        type=float,
+        default="0.2",
+        help="ratio of validation data size"
+    )
+
     parser.add_argument("--load", type=str, default=None, help="load quantized model")
 
     args = parser.parse_args()
@@ -414,7 +459,10 @@ def main():
         test_filepath = os.path.join(args.data_root, "all_base_x_all_instructions_filtered.jsonl")
 
     # prompt with no instruct, prompt with instruct, key, and type of instruction
-    base, base_without_instruct, id, type = pair[args.dataset]
+    if args.instruct_type == "number_sentences_at least" or "number_sentences_less than":
+        base, base_without_instruct, id, type = pair_length[args.dataset]
+    else:
+        base, base_without_instruct, id, type = pair[args.dataset]
     list_data_dict = load_jsonl_instruct(test_filepath, base, base_without_instruct, id, type)
 
 
@@ -457,8 +505,10 @@ def main():
     answers = [] if args.type == "inference" else {}
 
 
+
     train_data_dict, test_data_dict, valid_data_dict = filter_and_split_list(
-                list_data_dict, instruct_type=args.instruct_type, dataset_type=args.dataset, random_state=args.seed)
+                list_data_dict, instruct_type=args.instruct_type, dataset_type=args.dataset, random_state=args.seed,
+                train_size=float(args.train_size), test_size=float(args.test_size), valid_size=float(args.valid_size))
 
 
     if args.mode == "train":
@@ -480,10 +530,8 @@ def main():
             continue
 
         ####### build prompt
-        prompt_without_instruct, prompt = build_prompt(sample["prompt_without_instruct"], sample["prompt"],
-                                                           _type, args.num_sentences, args.least, args.most,
-                                                           args.model_name_or_path)
-
+        prompt_without_instruct, prompt = build_prompt(sample["prompt_without_instruct"], sample["prompt"], _type, args.least, args.most, args.model_name_or_path, args.type, args.calculate_mean_diff,
+                     args.steer_vec_sae)
 
         ####### apply chat template to instruction tuned models
         if "it" in args.model_name_or_path:
@@ -696,7 +744,13 @@ def main():
                     is_cor = is_all_uppercase(model_answer)
                     answers.append(is_cor)
                 elif "language_" in args.instruct_type:
-                    is_cor = correct_language(model_answer)
+                    is_cor = correct_language(model_answer, args.instruct_type)
+                    answers.append(is_cor)
+                elif "number_sentences_at least" in args.instruct_type:
+                    is_cor = num_sentences_at_least(model_answer, sample["id"]['num_sentences'])
+                    answers.append(is_cor)
+                elif "number_sentences_less than" in args.instruct_type:
+                    is_cor = num_sentences_at_most(model_answer, sample["id"]['num_sentences'])
                     answers.append(is_cor)
                 if args.debug:
                     print(f"Full input_text:\n{input_text}\n\n")

@@ -1,11 +1,12 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_without_instruct_ar.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_without_instruct_ar.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_with_instruct_ar.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_with_instruct_ar.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
 #SBATCH --time=04:00:00
+
 
 module load eth_proxy
 export TRANSFORMERS_CACHE=/cluster/scratch/jiaxie/.cache
@@ -31,6 +32,9 @@ PARAM_FILE="layer_31/width_16k/average_l0_71/params.npz"
 DATASET="all_base_x_all_instructions_filtered"
 INSTRUCT_TYPE="response_language_ar"
 MODE="test"
+TRAIN_SIZE=0.3
+TEST_SIZE=0.5
+VALID_SIZE=0.2
 
 python -u train/sae_instruct_follow.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -47,3 +51,7 @@ python -u train/sae_instruct_follow.py \
     --least \
     --instruct_type ${INSTRUCT_TYPE} \
     --mode ${MODE} \
+    --train_size ${TRAIN_SIZE} \
+    --test_size ${TEST_SIZE} \
+    --valid_size ${VALID_SIZE} \
+    --cot_flag \

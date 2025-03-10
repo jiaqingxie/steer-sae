@@ -46,6 +46,11 @@ pair = {
     "math": ["problem", "solution"],
     "instruct_format_length":["prompt", "prompt_without_instruction", "key", "instruction_id_list_for_eval"],
     "all_base_x_all_instructions_filtered":["model_output", "prompt_without_instruction", "icl_key", "single_instruction_id"]
+
+}
+
+pair_length = {
+    "all_base_x_all_instructions_filtered": ["model_output", "prompt_without_instruction", "single_instruction_kwargs_str", "single_instruction_id"]
 }
 
 

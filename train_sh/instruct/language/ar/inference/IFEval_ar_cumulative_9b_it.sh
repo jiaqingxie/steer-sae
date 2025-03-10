@@ -32,6 +32,9 @@ NUM_SAE=500
 DATASET="all_base_x_all_instructions_filtered"
 INSTRUCT_TYPE="response_language_ar"
 MODE="train"
+TRAIN_SIZE=0.3
+TEST_SIZE=0.5
+VALID_SIZE=0.2
 
 python -u train/sae_instruct_follow.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -49,3 +52,7 @@ python -u train/sae_instruct_follow.py \
     --instruct_type ${INSTRUCT_TYPE} \
     --bfloat16 \
     --mode ${MODE} \
+    --train_size ${TRAIN_SIZE} \
+    --test_size ${TEST_SIZE} \
+    --valid_size ${VALID_SIZE} \
+
