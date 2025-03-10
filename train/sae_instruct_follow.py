@@ -44,6 +44,11 @@ def is_all_uppercase(s: str) -> bool:
     s = s.replace("<end_of_turn>", "").replace("<eos>", "")
     return all(char.isupper() or not char.isalpha() for char in s)
 
+def correct_language(s, instruct_type):
+    groundtruth_lang = instruct_type[-1:]
+    detected_lang = detect(s)
+    return groundtruth_lang == detected_lang
+
 def build_prompt(prompt_without_instruct, prompt, type, num_sentences, least, most, model_name):
     if ("json_format" in type) or ("lowercase" in type) or ("english" in type) or ("english_capital" in type) or ("response_language" in type):
         if "it" not in model_name:
@@ -689,6 +694,9 @@ def main():
                     answers.append(is_cor)
                 elif "capital" in args.instruct_type:
                     is_cor = is_all_uppercase(model_answer)
+                    answers.append(is_cor)
+                elif "language_" in args.instruct_type:
+                    is_cor = correct_language(model_answer)
                     answers.append(is_cor)
                 if args.debug:
                     print(f"Full input_text:\n{input_text}\n\n")
