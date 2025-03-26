@@ -1,10 +1,10 @@
-SAE Index: 7007, Cardinality: 1000, Description: terms related to automotive diagnostics and their connection methods
-SAE Index: 2492, Cardinality: 1000, Description: technical terms related to mechanical and electrical engineering concepts
 SAE Index: 1126, Cardinality: 1000, Description:  numerical data and references in structured formats
-SAE Index: 13132, Cardinality: 1000, Description: terms or actions related to instructions and guidelines
-SAE Index: 9005, Cardinality: 999, Description: terms and phrases related to healthcare interventions and studies
-SAE Index: 319, Cardinality: 981, Description:  copyright and licensing information related to software
-SAE Index: 10528, Cardinality: 844, Description: references to statistical analysis and methodology
-SAE Index: 1935, Cardinality: 832, Description: sentences with numerical data and measurements related to various subjects
-SAE Index: 14806, Cardinality: 430, Description: structured data and mathematical formulations
-SAE Index: 1611, Cardinality: 272, Description: terms related to business transactions and financial details
+SAE Index: 1877, Cardinality: 1000, Description: technical or programming-related terms and functions
+SAE Index: 1935, Cardinality: 956, Description: sentences with numerical data and measurements related to various subjects
+SAE Index: 1744, Cardinality: 885, Description:  mathematical terms and expressions
+SAE Index: 11115, Cardinality: 593, Description: dates and structured data representations
+SAE Index: 2797, Cardinality: 542, Description: questions and responses related to personal experiences and creative processes
+SAE Index: 7007, Cardinality: 541, Description: terms related to automotive diagnostics and their connection methods
+SAE Index: 8549, Cardinality: 397, Description:  mathematical expressions or symbols used in proofs and formal definitions
+SAE Index: 5172, Cardinality: 375, Description: questions and directives related to test case management in a software testing context
+SAE Index: 13011, Cardinality: 323, Description: logical reasoning and problem-solving related content

@@ -1,0 +1,10 @@
+SAE Index: 6631, Cardinality: 73010.4765625, Description: the beginning of a text or important markers in a document
+SAE Index: 15153, Cardinality: 43960.1328125, Description:  mathematical expressions and relationships
+SAE Index: 1858, Cardinality: 36396.55859375, Description: punctuation marks and sentence endings
+SAE Index: 1642, Cardinality: 36120.01953125, Description:  numeric values and their relationships in a technical context
+SAE Index: 2899, Cardinality: 35011.69921875, Description: specific instructions or steps related to a process
+SAE Index: 435, Cardinality: 28984.546875, Description:  mathematical expressions and comparisons
+SAE Index: 11705, Cardinality: 28654.384765625, Description: financial terms related to returns and dividends
+SAE Index: 14196, Cardinality: 28152.330078125, Description: terms related to data privacy and security in various contexts
+SAE Index: 14889, Cardinality: 27228.310546875, Description: numerical calculations and code snippets in a written document.
+SAE Index: 7019, Cardinality: 25342.0078125, Description: the beginning of a new thought or section in text

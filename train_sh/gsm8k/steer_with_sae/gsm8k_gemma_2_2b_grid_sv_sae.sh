@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_gsm8k_0shot_C600_T3_omega1_15153.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_gsm8k_0shot_C600_T3_omega1_15153.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_gsm8k_0shot_C200_T0_omega1_15153.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_gsm8k_0shot_C200_T0_omega1_15153.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -19,7 +19,7 @@ cd /cluster/project/sachan/jiaxie/SAE_Math
 
 #Settings alphabetically
 CACHE_DIR="/cluster/scratch/jiaxie/models/google/gemma-2-2b"
-COEFF=(600)
+COEFF=(200)
 DATA_ROOT="/cluster/project/sachan/jiaxie/SAE_Math/data"
 K=10
 LAYER_IDX=20
@@ -32,7 +32,7 @@ SAE_IDX=(15153)
 TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
-T=3
+T=0
 OMEGA=1
 
 python -u train/sae.py \

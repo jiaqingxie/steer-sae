@@ -32,6 +32,7 @@ NUM_SAE=500
 DATASET="all_base_x_all_instructions_filtered"
 INSTRUCT_TYPE="number_sentences_at least"
 MODE="train"
+NUM_SENTENCES=3
 
 python -u train/sae_instruct_follow.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -46,7 +47,9 @@ python -u train/sae_instruct_follow.py \
     --sae_id ${SAE_ID} \
     --dataset ${DATASET} \
     --NUM_SAE ${NUM_SAE} \
-    --instruct_type ${INSTRUCT_TYPE} \
+    --instruct_type "${INSTRUCT_TYPE}" \
     --bfloat16 \
     --mode ${MODE} \
+    --least \
     --cumulative \
+    --num_sentences ${NUM_SENTENCES} \

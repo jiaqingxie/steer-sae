@@ -1,0 +1,10 @@
+SAE Index: 1607, Cardinality: 1319, Description: references to \\\"head\\\" and related terms, particularly in medical or physiological contexts
+SAE Index: 6320, Cardinality: 1319, Description: terms related to cell behaviors and developmental biology, particularly focusing on defects and structures associated with cells
+SAE Index: 6961, Cardinality: 1273, Description:  references to additional items or examples in a list format
+SAE Index: 15609, Cardinality: 1001, Description: features and specifications related to home appliances or devices
+SAE Index: 1500, Cardinality: 927, Description: expressions of customer satisfaction
+SAE Index: 7783, Cardinality: 634, Description: instances of academic language and research presentation
+SAE Index: 15567, Cardinality: 566, Description:  mathematical symbols and punctuation in a technical context
+SAE Index: 2352, Cardinality: 555, Description: elements related to dates and times, as well as specific biological sequences
+SAE Index: 1774, Cardinality: 499, Description: elements that represent structured data or programming constructs
+SAE Index: 14613, Cardinality: 413, Description: code structures related to conditional checks and data type comparisons

@@ -1,10 +1,10 @@
-SAE Index: 15153, Cardinality: 50.49268359375, Description:  mathematical expressions and relationships
-SAE Index: 435, Cardinality: 36.7698359375, Description:  mathematical expressions and comparisons
-SAE Index: 6631, Cardinality: 36.6056328125, Description: the beginning of a text or important markers in a document
-SAE Index: 6163, Cardinality: 28.993912109375, Description: monetary values and their associated attributes in different contexts
-SAE Index: 15510, Cardinality: 26.1366328125, Description: elements of structured formatting or organization in text, particularly in tables or lists
-SAE Index: 1858, Cardinality: 24.501673828125, Description: punctuation marks and sentence endings
-SAE Index: 15829, Cardinality: 23.914083984375, Description: questions and inquiries, particularly those seeking explanations or answers
-SAE Index: 2966, Cardinality: 17.483912109375, Description: technical terms related to mechanical or electrical components and their functions
-SAE Index: 10269, Cardinality: 16.255994140625, Description: quantitative measurements and comparisons in the text
-SAE Index: 15846, Cardinality: 15.3403486328125, Description: mathematical terminology and expressions related to vectors and equations
+SAE Index: 6631, Cardinality: 63.2468828125, Description: the beginning of a text or important markers in a document
+SAE Index: 15153, Cardinality: 35.23803515625, Description:  mathematical expressions and relationships
+SAE Index: 1858, Cardinality: 33.50165625, Description: punctuation marks and sentence endings
+SAE Index: 1642, Cardinality: 27.36873046875, Description:  numeric values and their relationships in a technical context
+SAE Index: 2899, Cardinality: 24.51409375, Description: specific instructions or steps related to a process
+SAE Index: 435, Cardinality: 21.994052734375, Description:  mathematical expressions and comparisons
+SAE Index: 11705, Cardinality: 21.976912109375, Description: financial terms related to returns and dividends
+SAE Index: 14889, Cardinality: 21.878419921875, Description: numerical calculations and code snippets in a written document.
+SAE Index: 14196, Cardinality: 21.46349609375, Description: terms related to data privacy and security in various contexts
+SAE Index: 10071, Cardinality: 17.29053125, Description:  punctuation marks and counts associated with numerical data

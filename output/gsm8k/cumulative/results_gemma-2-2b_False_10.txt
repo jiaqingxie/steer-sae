@@ -1,10 +1,10 @@
-SAE Index: 6868, Cardinality: 78890.03125, Description: technical details related to ability and functions associated with equipment or machinery
-SAE Index: 12748, Cardinality: 54970.421875, Description:  structured data representations and their attributes
-SAE Index: 2221, Cardinality: 47553.6171875, Description: language surrounding conditions and actions related to technical processes or implementations
-SAE Index: 7019, Cardinality: 37345.2421875, Description: the beginning of a new thought or section in text
-SAE Index: 10640, Cardinality: 30428.80078125, Description: information about critiques and evaluations in research studies
-SAE Index: 15153, Cardinality: 28851.94140625, Description:  mathematical expressions and relationships
-SAE Index: 435, Cardinality: 28756.98828125, Description:  mathematical expressions and comparisons
-SAE Index: 2899, Cardinality: 26323.853515625, Description: specific instructions or steps related to a process
-SAE Index: 1249, Cardinality: 23992.982421875, Description:  concepts related to questioning and answers
-SAE Index: 1642, Cardinality: 23139.615234375, Description:  numeric values and their relationships in a technical context
+SAE Index: 6868, Cardinality: 83525.828125, Description: technical details related to ability and functions associated with equipment or machinery
+SAE Index: 12748, Cardinality: 76203.6875, Description:  structured data representations and their attributes
+SAE Index: 2221, Cardinality: 50577.33984375, Description: language surrounding conditions and actions related to technical processes or implementations
+SAE Index: 7019, Cardinality: 34783.1484375, Description: the beginning of a new thought or section in text
+SAE Index: 10640, Cardinality: 34768.140625, Description: information about critiques and evaluations in research studies
+SAE Index: 8684, Cardinality: 28850.478515625, Description:  technical jargon and programming-related terms
+SAE Index: 2899, Cardinality: 25982.302734375, Description: specific instructions or steps related to a process
+SAE Index: 435, Cardinality: 25448.736328125, Description:  mathematical expressions and comparisons
+SAE Index: 1249, Cardinality: 23998.291015625, Description:  concepts related to questioning and answers
+SAE Index: 9402, Cardinality: 23280.453125, Description: the term \\\"is\\\" used in various contexts, indicating definitions or states of being

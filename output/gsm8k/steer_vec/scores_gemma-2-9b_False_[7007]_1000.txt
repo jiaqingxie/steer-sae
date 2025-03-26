@@ -1,0 +1,1 @@
+Num of total question: 1319, Correct num: 385, Accuracy: 0.2918877937831691.

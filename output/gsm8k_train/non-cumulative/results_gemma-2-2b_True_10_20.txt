@@ -1,10 +1,10 @@
-SAE Index: 15153, Cardinality: 1000, Description:  mathematical expressions and relationships
-SAE Index: 6163, Cardinality: 1000, Description: monetary values and their associated attributes in different contexts
-SAE Index: 435, Cardinality: 997, Description:  mathematical expressions and comparisons
-SAE Index: 15510, Cardinality: 989, Description: elements of structured formatting or organization in text, particularly in tables or lists
-SAE Index: 6631, Cardinality: 975, Description: the beginning of a text or important markers in a document
-SAE Index: 1858, Cardinality: 896, Description: punctuation marks and sentence endings
-SAE Index: 15829, Cardinality: 865, Description: questions and inquiries, particularly those seeking explanations or answers
-SAE Index: 2966, Cardinality: 389, Description: technical terms related to mechanical or electrical components and their functions
-SAE Index: 12783, Cardinality: 364, Description: references to numerical data and counts related to various contexts
-SAE Index: 14426, Cardinality: 242, Description: phrases related to financial costs and savings
+SAE Index: 6631, Cardinality: 1000, Description: the beginning of a text or important markers in a document
+SAE Index: 1858, Cardinality: 997, Description: punctuation marks and sentence endings
+SAE Index: 15153, Cardinality: 985, Description:  mathematical expressions and relationships
+SAE Index: 1642, Cardinality: 872, Description:  numeric values and their relationships in a technical context
+SAE Index: 2899, Cardinality: 779, Description: specific instructions or steps related to a process
+SAE Index: 11705, Cardinality: 506, Description: financial terms related to returns and dividends
+SAE Index: 14889, Cardinality: 474, Description: numerical calculations and code snippets in a written document.
+SAE Index: 435, Cardinality: 440, Description:  mathematical expressions and comparisons
+SAE Index: 14196, Cardinality: 394, Description: terms related to data privacy and security in various contexts
+SAE Index: 1923, Cardinality: 320, Description: phrases indicating reported speech or quotations

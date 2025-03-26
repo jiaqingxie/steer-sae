@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_without_instruct_least_sen.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_without_instruct_least_sen.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_with_instruct_least_sen_4.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_inference_9b_it_with_instruct_least_sen_4.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -31,6 +31,7 @@ PARAM_FILE="layer_31/width_16k/average_l0_71/params.npz"
 DATASET="all_base_x_all_instructions_filtered"
 INSTRUCT_TYPE="number_sentences_at least"
 MODE="test"
+NUM_SENTENCES=4
 
 python -u train/sae_instruct_follow.py \
     --model_name_or_path ${MODEL_NAME_OR_PATH} \
@@ -45,6 +46,7 @@ python -u train/sae_instruct_follow.py \
     --vllm \
     --dataset ${DATASET} \
     --least \
-    --instruct_type ${INSTRUCT_TYPE} \
+    --instruct_type "${INSTRUCT_TYPE}" \
     --mode ${MODE} \
-
+    --num_sentences ${NUM_SENTENCES} \
+    --cot_flag \

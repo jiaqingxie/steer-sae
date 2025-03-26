@@ -32,7 +32,7 @@ INVALID_ANS = "[invalid]"
 ANSWER_TRIGGER = "The answer is"
 
 def _get_sentence_tokenizer():
-  return nltk.data.load("nltk:tokenizers/punkt/english.pickle")
+  return nltk.data.load("tokenizers/punkt/english.pickle")
 
 
 def count_sentences(text):
@@ -53,22 +53,24 @@ def is_all_uppercase(s: str) -> bool:
     return all(char.isupper() or not char.isalpha() for char in s)
 
 def num_sentences_at_least(s, value):
+    s = s.replace("<end_of_turn>", "").replace("<eos>", "")
     length = count_sentences(s)
-    if length >= value:
+    if length == value:
         return True
     else:
         return False
 
 def num_sentences_at_most(s, value):
+    s = s.replace("<end_of_turn>", "").replace("<eos>", "")
     length = count_sentences(s)
-    if length <= value:
+    if length == value:
         return True
     else:
         return False
 def correct_language(s, instruct_type):
     groundtruth_lang = instruct_type[-2:]
 
-    if "de" not in instruct_type and "it" not in instruct_type:
+    if "de" not in instruct_type and "it" not in instruct_type and "sw" not in instruct_type:
         filtered_s = re.sub(r'[a-zA-Z.,!?;:(){}\[\]"\'\-]', '', s)
     else:
         filtered_s = s
@@ -80,30 +82,51 @@ def correct_language(s, instruct_type):
         return False
     return groundtruth_lang == detected_lang
 
-def build_prompt(prompt_without_instruct, prompt, type, least, most, model_name, inference, calculate_mean_diff, steer_vec_sae):
+def word_inclusion(s,  value):
+    if value.lower() in s.lower():
+        return True
+    else:
+        return False
+
+def word_exclusion(s, value):
+    if value.lower() + " " not in s.lower():
+        return True
+    else:
+        return False
+
+
+def build_prompt(prompt_without_instruct, prompt, type, least, most, model_name, inference, calculate_mean_diff, steer_vec_sae, num_sentences):
     if ("json_format" in type) or ("lowercase" in type) or ("english_capital" in type) or ("response_language" in type):
         if "it" not in model_name:
             prompt_without_instruct = "Question: " + prompt_without_instruct + "\nAnswer:"
             prompt = "Question: " + prompt + "\nAnswer:"
         return prompt_without_instruct, prompt
     elif "number_sentences" in type:
-        if least:
-            if inference == "inference":
-                if calculate_mean_diff: # case 1: calculate mean activation difference
-                    prompt = prompt_without_instruct + " The answer should be long."
-                elif steer_vec_sae: # case 2: steering the model with sae vector or meanactdiff
-                    prompt_without_instruct = prompt
-            elif inference == "sae":
-                prompt = prompt_without_instruct + " The answer should be long."
-        elif most:
-            if inference == "inference":
-                if calculate_mean_diff:  # case 1: calculate mean activation difference
-                    prompt = prompt_without_instruct + " The answer should be short."
-                elif steer_vec_sae:  # case 2: steering the model with sae vector or meanactdiff
-                    prompt_without_instruct = prompt
-            elif inference == "sae":
-                prompt = prompt_without_instruct + " The answer should be short."
+        # if least:
+        #     if inference == "inference":
+        #         if calculate_mean_diff: # case 1: calculate mean activation difference
+        #             prompt = prompt_without_instruct + " The answer should be long."
+        #         # elif steer_vec_sae: # case 2: steering the model with sae vector or meanactdiff
+        #         #     prompt_without_instruct = prompt
+        #     # elif inference == "sae":
+        #     #     prompt = prompt_without_instruct + " The answer should be long."
+        # elif most:
+        #     if inference == "inference":
+        #         if calculate_mean_diff:  # case 1: calculate mean activation difference
+        #             prompt = prompt_without_instruct + " The answer should be short."
+        #         # elif steer_vec_sae:  # case 2: steering the model with sae vector or meanactdiff
+        #         #     prompt_without_instruct = prompt
+        #     # elif inference == "sae":
+        #     #     prompt = prompt_without_instruct + " The answer should be short."
 
+        prompt = prompt_without_instruct + " Answer using {} sentences".format(num_sentences)
+
+        if steer_vec_sae:
+            prompt_without_instruct = prompt
+        return prompt_without_instruct, prompt
+    elif "existence" in type or "forbidden_words" in type:
+        if steer_vec_sae:
+            prompt_without_instruct = prompt
         return prompt_without_instruct, prompt
     else:
         raise ValueError("this type is not supported")
@@ -395,6 +418,21 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--inclu_word",
+        type=str,
+        default="cat",
+        help="existence of the word"
+    )
+
+    parser.add_argument(
+        "--exclu_word",
+        type=str,
+        default="die",
+        help="non-existence of the word"
+    )
+
+
+    parser.add_argument(
         "--valid_size",
         type=float,
         default="0.3",
@@ -457,9 +495,13 @@ def main():
         test_filepath = os.path.join(args.data_root, "input_data_single_instr.jsonl")
     elif args.dataset == "all_base_x_all_instructions_filtered":
         test_filepath = os.path.join(args.data_root, "all_base_x_all_instructions_filtered.jsonl")
+    elif args.dataset == "modified_ifeval_single_keyword_include":
+        test_filepath = os.path.join(args.data_root, "modified_ifeval_single_keyword_include.jsonl")
 
     # prompt with no instruct, prompt with instruct, key, and type of instruction
-    if args.instruct_type == "number_sentences_at least" or "number_sentences_less than":
+    if args.instruct_type == "number_sentences_at least" or args.instruct_type == "number_sentences_less than":
+        base, base_without_instruct, id, type = pair_length[args.dataset]
+    elif args.instruct_type == "existence" or args.instruct_type == "forbidden_words":
         base, base_without_instruct, id, type = pair_length[args.dataset]
     else:
         base, base_without_instruct, id, type = pair[args.dataset]
@@ -522,16 +564,26 @@ def main():
 
     for sample in tqdm(list_data_dict):
         ###### if test, then sample["type"][0], else: sample["type"]
-        if args.dataset == "instruct_format_length":
+        if args.dataset == "instruct_format_length" or args.dataset == "modified_ifeval_single_keyword_include":
             _type = sample["type"][0]
         else:
             _type = sample["type"]
         if args.instruct_type not in _type:
             continue
 
+
+        ####### if inclu_word / exclu_word in sample["category"], then extract this example
+        if args.instruct_type == "existence":
+            if args.inclu_word not in sample["category"]:
+                continue
+        elif args.instruct_type == "forbidden_words":
+            if args.exclu_word not in sample["category"]:
+                continue
+
+
         ####### build prompt
         prompt_without_instruct, prompt = build_prompt(sample["prompt_without_instruct"], sample["prompt"], _type, args.least, args.most, args.model_name_or_path, args.type, args.calculate_mean_diff,
-                     args.steer_vec_sae)
+                     args.steer_vec_sae, args.num_sentences)
 
         ####### apply chat template to instruction tuned models
         if "it" in args.model_name_or_path:
@@ -624,7 +676,7 @@ def main():
                                 input=generated_tokens,
                                 max_new_tokens=1,
                                 do_sample=True,
-                                eos_token_id=[eos_token_id, eos_token_id_2],
+                                eos_token_id=[eos_token_id, eos_token_id_2, eos_token_id_3],
                                 **kwargs,
                                 verbose=False,
                             )
@@ -747,10 +799,22 @@ def main():
                     is_cor = correct_language(model_answer, args.instruct_type)
                     answers.append(is_cor)
                 elif "number_sentences_at least" in args.instruct_type:
-                    is_cor = num_sentences_at_least(model_answer, sample["id"]['num_sentences'])
+                    gt = re.search(r'\d+(?!.*\d)', sample["category"])
+
+                    # is_cor = num_sentences_at_least(model_answer, int(gt.group()))
+                    is_cor = num_sentences_at_least(model_answer,int(args.num_sentences))
+
                     answers.append(is_cor)
                 elif "number_sentences_less than" in args.instruct_type:
-                    is_cor = num_sentences_at_most(model_answer, sample["id"]['num_sentences'])
+                    gt = re.search(r'\d+(?!.*\d)', sample["category"])
+                    # is_cor = num_sentences_at_most(model_answer, int(gt.group()))
+                    is_cor = num_sentences_at_most(model_answer, int(args.num_sentences))
+                    answers.append(is_cor)
+                elif "existence" in args.instruct_type:
+                    is_cor = word_inclusion(model_answer, args.inclu_word)
+                    answers.append(is_cor)
+                elif "forbidden_words" in args.instruct_type:
+                    is_cor = word_exclusion(model_answer, args.exclu_word)
                     answers.append(is_cor)
                 if args.debug:
                     print(f"Full input_text:\n{input_text}\n\n")
@@ -773,6 +837,7 @@ def main():
                 input_text = prompt
             else:
                 input_text = prompt_without_instruct
+            print(input_text)
             with torch.no_grad():
                 inputs = tokenizer.encode(
                     input_text, return_tensors="pt", add_special_tokens=True

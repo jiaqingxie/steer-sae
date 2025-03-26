@@ -1,10 +1,10 @@
-SAE Index: 1126, Cardinality: 76.8028359375, Description:  numerical data and references in structured formats
-SAE Index: 7007, Cardinality: 58.21286328125, Description: terms related to automotive diagnostics and their connection methods
-SAE Index: 6782, Cardinality: 40.52406640625, Description: technical terms and processes related to scientific algorithms and methodologies
-SAE Index: 12946, Cardinality: 36.35283984375, Description: phrases indicating reasons or justifications in legal or analytical contexts
-SAE Index: 10817, Cardinality: 36.25492578125, Description: technical terms and concepts related to data processing and analysis
-SAE Index: 1744, Cardinality: 32.688015625, Description:  mathematical terms and expressions
-SAE Index: 548, Cardinality: 28.187099609375, Description:  mathematical expressions and symbols
-SAE Index: 2797, Cardinality: 27.010548828125, Description: questions and responses related to personal experiences and creative processes
-SAE Index: 9005, Cardinality: 25.757142578125, Description: terms and phrases related to healthcare interventions and studies
-SAE Index: 8549, Cardinality: 25.51905078125, Description:  mathematical expressions or symbols used in proofs and formal definitions
+SAE Index: 7007, Cardinality: 98.907953125, Description: terms related to automotive diagnostics and their connection methods
+SAE Index: 1126, Cardinality: 88.2613515625, Description:  numerical data and references in structured formats
+SAE Index: 9005, Cardinality: 71.25096875, Description: terms and phrases related to healthcare interventions and studies
+SAE Index: 6782, Cardinality: 47.56842578125, Description: technical terms and processes related to scientific algorithms and methodologies
+SAE Index: 12946, Cardinality: 28.533640625, Description: phrases indicating reasons or justifications in legal or analytical contexts
+SAE Index: 9723, Cardinality: 28.490845703125, Description: references to elements of religious beliefs or spirituality
+SAE Index: 5330, Cardinality: 26.610826171875, Description:  punctuation marks at the end of sentences
+SAE Index: 7606, Cardinality: 25.0759921875, Description: punctuation marks and special characters
+SAE Index: 3396, Cardinality: 23.32476953125, Description:  references to programming and coding structure
+SAE Index: 5242, Cardinality: 22.4053671875, Description: conditional and hypothetical statements in mathematical or logical contexts

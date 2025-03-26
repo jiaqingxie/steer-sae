@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_9b_it_non_cumulative.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_9b_it_non_cumulative.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/IFEval_9b_it_cumulative_with_intruct.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/IFEval_9b_it_cumulative_with_instruct.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:2
@@ -49,3 +49,5 @@ python -u train/sae_instruct_follow.py \
     --instruct_type ${INSTRUCT_TYPE} \
     --bfloat16 \
     --mode ${MODE} \
+    --cumulative \
+    --cot_flag \

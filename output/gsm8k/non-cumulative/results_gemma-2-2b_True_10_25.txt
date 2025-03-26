@@ -1,0 +1,10 @@
+SAE Index: 3017, Cardinality: 1319, Description: terms and symbols related to scientific measurement and imaging technologies
+SAE Index: 12908, Cardinality: 1317, Description:  statistical data concerning gender demographics and financial behaviors
+SAE Index: 14325, Cardinality: 1289, Description: concepts related to relationships and connections between elements
+SAE Index: 16361, Cardinality: 1239, Description: components of a data retrieval or record management system
+SAE Index: 10550, Cardinality: 1107, Description: terms related to institutions and organizations involved in research and higher education
+SAE Index: 1689, Cardinality: 987, Description: criteria and guidelines related to health and safety standards
+SAE Index: 8456, Cardinality: 837, Description:  terms related to programming constructs and structures in code
+SAE Index: 4120, Cardinality: 777, Description: phrases related to legal and procedural contexts
+SAE Index: 8657, Cardinality: 672, Description: references to specific locations or regions, particularly those involving the United States
+SAE Index: 12182, Cardinality: 662, Description: numerical sequences and identifiers related to specific items or entities

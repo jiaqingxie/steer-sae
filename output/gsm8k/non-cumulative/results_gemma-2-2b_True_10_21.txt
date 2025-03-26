@@ -1,0 +1,10 @@
+SAE Index: 4138, Cardinality: 1319, Description: technical or programming terms and references across various contexts
+SAE Index: 5031, Cardinality: 1319, Description: sentence-ending punctuation marks, indicating closure or finality
+SAE Index: 4187, Cardinality: 856, Description:  legal terms and phrases related to court proceedings or legal documents
+SAE Index: 6929, Cardinality: 771, Description: questions related to measurements and conversions
+SAE Index: 10582, Cardinality: 676, Description:  numerical data related to financial metrics
+SAE Index: 9332, Cardinality: 643, Description: structured elements and formatting details in documents
+SAE Index: 9326, Cardinality: 569, Description:  punctuation marks and special characters
+SAE Index: 7053, Cardinality: 447, Description: conversations and interactions related to personal and legal matters
+SAE Index: 1065, Cardinality: 439, Description: instances of governmental or political power dynamics related to entities and actions
+SAE Index: 5522, Cardinality: 398, Description: information related to data security and privacy threats

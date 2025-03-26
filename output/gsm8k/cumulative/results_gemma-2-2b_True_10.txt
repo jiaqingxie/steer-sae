@@ -1,10 +1,10 @@
-SAE Index: 15153, Cardinality: 65008.48828125, Description:  mathematical expressions and relationships
-SAE Index: 15510, Cardinality: 55098.99609375, Description: elements of structured formatting or organization in text, particularly in tables or lists
-SAE Index: 435, Cardinality: 47332.87890625, Description:  mathematical expressions and comparisons
-SAE Index: 13541, Cardinality: 42249.54296875, Description: answers and explanations to logical or mathematical questions
-SAE Index: 15829, Cardinality: 37189.3125, Description: questions and inquiries, particularly those seeking explanations or answers
-SAE Index: 14352, Cardinality: 25602.392578125, Description: terms associated with academic contributions and achievements in mathematics
-SAE Index: 6163, Cardinality: 25103.677734375, Description: monetary values and their associated attributes in different contexts
-SAE Index: 6143, Cardinality: 24405.650390625, Description: phrases related to medical conditions and treatments
-SAE Index: 15846, Cardinality: 21476.474609375, Description: mathematical terminology and expressions related to vectors and equations
-SAE Index: 9599, Cardinality: 21400.689453125, Description:  punctuation marks and numerical values
+SAE Index: 6562, Cardinality: 85221.359375, Description: unusual formatting or whitespace patterns in the text
+SAE Index: 15056, Cardinality: 67068.8046875, Description: specific punctuation marks and formatting elements in text
+SAE Index: 11545, Cardinality: 62867.77734375, Description:  instances of possessive forms and plurality in nouns
+SAE Index: 8900, Cardinality: 52806.98046875, Description: numerical information, especially related to phone numbers and contact details
+SAE Index: 12741, Cardinality: 50487.1875, Description: technical terms related to mathematical modeling and physics, specifically focusing on equations and parameters
+SAE Index: 7415, Cardinality: 42431.2890625, Description: technical details related to semiconductor devices
+SAE Index: 14602, Cardinality: 41368.20703125, Description: references to medical or technical protocols and assessments
+SAE Index: 8008, Cardinality: 36116.15625, Description: the start of a new section within the document
+SAE Index: 8771, Cardinality: 34458.44140625, Description: technical terms and detailed procedural information related to recipes
+SAE Index: 3328, Cardinality: 32985.24609375, Description: phrases related to music education

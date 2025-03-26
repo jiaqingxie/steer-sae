@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_svamp_0shot_C600_T3_omega1_15153.out
-#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_svamp_0shot_C600_T3_omega1_15153.err
+#SBATCH --output=/cluster/project/sachan/jiaxie/results/2b_svamp_0shot_C200_T0_omega1_15153.out
+#SBATCH --error=/cluster/project/sachan/jiaxie/results/2b_svamp_0shot_C200_T0_omega1_15153.err
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=rtx_3090:1
@@ -33,7 +33,7 @@ TRANSFORMER_LENS=True
 TYPE="inference"
 N_SHOT=0
 DATASET="svamp"
-T=3
+T=0
 OMEGA=1
 
 

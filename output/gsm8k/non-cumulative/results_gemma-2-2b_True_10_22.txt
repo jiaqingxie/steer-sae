@@ -1,0 +1,10 @@
+SAE Index: 14393, Cardinality: 1319, Description:  declarative sentences or statements
+SAE Index: 15056, Cardinality: 1315, Description: certain key terms and phrases related to various subjects such as programming, medicine, and science
+SAE Index: 2062, Cardinality: 923, Description:  punctuation marks and their variations in sentences
+SAE Index: 7398, Cardinality: 803, Description: words related to statistical calculations and probabilities
+SAE Index: 6562, Cardinality: 728, Description: mathematical expressions and relationships, particularly involving variables and their functions
+SAE Index: 7827, Cardinality: 523, Description:  punctuation marks and their context within sentences
+SAE Index: 1208, Cardinality: 450, Description: instances of significant financial outcomes or events related to winnings
+SAE Index: 8287, Cardinality: 390, Description: references to original sources or structures in a document
+SAE Index: 14449, Cardinality: 368, Description: phrases related to time, measurement, and calculations
+SAE Index: 3497, Cardinality: 327, Description: references to personal health and medical conditions

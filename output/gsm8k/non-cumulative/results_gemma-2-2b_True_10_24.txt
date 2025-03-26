@@ -1,0 +1,10 @@
+SAE Index: 14870, Cardinality: 1319, Description:  phrases related to pharmaceuticals and drug delivery systems
+SAE Index: 6408, Cardinality: 1319, Description: concepts related to social and cultural issues
+SAE Index: 4680, Cardinality: 1169, Description:  LaTeX formatting commands and structures
+SAE Index: 1958, Cardinality: 954, Description: names of specific people or entities
+SAE Index: 261, Cardinality: 910, Description: structured legal arguments and formal judicial language
+SAE Index: 14391, Cardinality: 863, Description:  phrases related to setting up and managing communication channels in programming
+SAE Index: 16306, Cardinality: 719, Description: special characters and symbols in text
+SAE Index: 8662, Cardinality: 475, Description: mathematical symbols and notations
+SAE Index: 9974, Cardinality: 396, Description:  code structures and programming concepts
+SAE Index: 11669, Cardinality: 341, Description: terms related to executive leadership roles

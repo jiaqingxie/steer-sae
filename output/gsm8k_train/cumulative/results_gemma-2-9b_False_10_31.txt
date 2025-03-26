@@ -1,10 +1,10 @@
-SAE Index: 7007, Cardinality: 87.0366484375, Description: terms related to automotive diagnostics and their connection methods
-SAE Index: 2492, Cardinality: 81.0191640625, Description: technical terms related to mechanical and electrical engineering concepts
-SAE Index: 1126, Cardinality: 71.3229375, Description:  numerical data and references in structured formats
-SAE Index: 13132, Cardinality: 61.0626171875, Description: terms or actions related to instructions and guidelines
-SAE Index: 9005, Cardinality: 60.69253515625, Description: terms and phrases related to healthcare interventions and studies
-SAE Index: 319, Cardinality: 53.86852734375, Description:  copyright and licensing information related to software
-SAE Index: 10528, Cardinality: 29.462263671875, Description: references to statistical analysis and methodology
-SAE Index: 1935, Cardinality: 27.251884765625, Description: sentences with numerical data and measurements related to various subjects
-SAE Index: 7606, Cardinality: 22.0402421875, Description: punctuation marks and special characters
-SAE Index: 14806, Cardinality: 21.459318359375, Description: structured data and mathematical formulations
+SAE Index: 1126, Cardinality: 73.327390625, Description:  numerical data and references in structured formats
+SAE Index: 1744, Cardinality: 35.5424921875, Description:  mathematical terms and expressions
+SAE Index: 1877, Cardinality: 35.48193359375, Description: technical or programming-related terms and functions
+SAE Index: 1935, Cardinality: 30.994595703125, Description: sentences with numerical data and measurements related to various subjects
+SAE Index: 11115, Cardinality: 24.009357421875, Description: dates and structured data representations
+SAE Index: 2797, Cardinality: 23.903388671875, Description: questions and responses related to personal experiences and creative processes
+SAE Index: 7007, Cardinality: 23.810744140625, Description: terms related to automotive diagnostics and their connection methods
+SAE Index: 8549, Cardinality: 21.93634765625, Description:  mathematical expressions or symbols used in proofs and formal definitions
+SAE Index: 5172, Cardinality: 21.60583203125, Description: questions and directives related to test case management in a software testing context
+SAE Index: 13011, Cardinality: 20.654306640625, Description: logical reasoning and problem-solving related content
