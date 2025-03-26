@@ -45,12 +45,16 @@ pair = {
     "asdiv": ["question", "body", "answer"],
     "math": ["problem", "solution"],
     "instruct_format_length":["prompt", "prompt_without_instruction", "key", "instruction_id_list_for_eval"],
-    "all_base_x_all_instructions_filtered":["model_output", "prompt_without_instruction", "icl_key", "single_instruction_id"]
-
+    "all_base_x_all_instructions_filtered":["model_output", "prompt_without_instruction", "icl_key", "single_instruction_id"],
+    "modified_ifeval_single_keyword_include":["prompt", "prompt_without_instruction", "kwargs", "instruction_id_list"]
 }
 
 pair_length = {
     "all_base_x_all_instructions_filtered": ["model_output", "prompt_without_instruction", "single_instruction_kwargs_str", "single_instruction_id"]
+}
+
+pair_exist = {
+"all_base_x_all_instructions_filtered":["model_output", "prompt_without_instruction", "kwargs", "single_instruction_id"]
 }
 
 
@@ -124,7 +128,6 @@ def load_jsonl(
             list_data_dict.append(new_item)
     return list_data_dict
 
-
 def load_jsonl_instruct(
     file_path,
     prompt="inputs",
@@ -149,12 +152,11 @@ def load_jsonl_instruct(
     return list_data_dict
 
 
-
 def filter_and_split_list(data_list, instruct_type, dataset_type, train_size=0.5, test_size=0.2, valid_size=0.3, random_state=None):
 
     filtered_list = []
     for sample in data_list:
-        if dataset_type == "instruct_format_length":
+        if dataset_type == "instruct_format_length" or dataset_type == "modified_ifeval_single_keyword_include":
             _type = sample["type"][0]
         else:
             _type = sample["type"]
